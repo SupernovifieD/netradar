@@ -3,10 +3,8 @@ import socket
 import requests
 from requests.exceptions import RequestException
 
-# ----------------------------
-# DNS CHECK
-# ----------------------------
 def dns_check(domain, timeout=2):
+    """Check if DNS resolution works"""
     try:
         socket.setdefaulttimeout(timeout)
         socket.gethostbyname(domain)
@@ -14,10 +12,8 @@ def dns_check(domain, timeout=2):
     except Exception:
         return "FAIL"
 
-# ----------------------------
-# TCP/HTTP CHECK
-# ----------------------------
 def tcp_check(domain):
+    """Check TCP/HTTP connectivity"""
     try:
         requests.head(f"https://{domain}", timeout=2, allow_redirects=True, verify=False)
         return "HTTPS"
@@ -30,10 +26,8 @@ def tcp_check(domain):
         pass
     return "FAIL"
 
-# ----------------------------
-# PING
-# ----------------------------
 def ping_stats(domain):
+    """Get ping latency and packet loss"""
     try:
         result = subprocess.run(
             ["ping", "-c", "4", "-W", "1", domain],
@@ -58,16 +52,12 @@ def ping_stats(domain):
     except Exception:
         return ("na", "100")
 
-# ----------------------------
-# STATUS COMPUTATION
-# ----------------------------
 def compute_status(dns, tcp):
+    """Determine overall service status"""
     return "UP" if tcp != "FAIL" else "DOWN"
 
-# ----------------------------
-# TASK RUN BY THREADS
-# ----------------------------
 def check_service(service):
+    """Run all checks for a service"""
     dns = dns_check(service)
     tcp = tcp_check(service) if dns == "OK" else "FAIL"
     latency, packet_loss = ping_stats(service)

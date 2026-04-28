@@ -23,6 +23,15 @@ def get_history():
         'data': results
     })
 
+@bp.route('/history/24h', methods=['GET'])
+def get_last_24h():
+    results = CheckResult.get_last_24h()
+    return jsonify({
+        'success': True,
+        'data': results
+    })
+
+
 @bp.route('/service/<service>', methods=['GET'])
 def get_service_history(service):
     """Get history for a specific service"""

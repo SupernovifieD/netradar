@@ -72,3 +72,21 @@ class CheckResult:
         results = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return results
+
+    @staticmethod
+    def get_last_24h():
+        """Get check results from the last 24 hours"""
+        conn = sqlite3.connect(Config.DATABASE_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT * FROM checks
+            WHERE timestamp >= datetime('now', '-24 hours')
+            ORDER BY timestamp DESC
+        ''')
+
+        results = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return results
+

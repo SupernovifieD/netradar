@@ -27,21 +27,28 @@ export default function ServiceCard({name, buckets}:{
   const manyReds = hasConsecutiveReds(buckets,4);
 
   return (
-    <div className="box" style={{marginBottom:"10px"}}>
+  <div className="box" style={{ marginBottom: "10px" }}>
+    <div style={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
+      
+      <span>{name}</span>
 
-      <div style={{fontWeight:"bold",display:"flex",justifyContent:"space-between"}}>
-        <span>{name}</span>
-
-        {manyReds && (
-          <span style={{color:"red",fontSize:"14px"}}>
-            خارج از دسترس
-          </span>
-        )}
-
-      </div>
-
-      <StatusBar buckets={buckets}/>
+      {manyReds && (
+        <span
+          style={{
+            color: "red",
+            fontSize: "14px",
+            direction: "ltr",
+            unicodeBidi: "isolate"
+          }}
+        >
+          خارج از دسترس
+        </span>
+      )}
 
     </div>
+
+    <StatusBar buckets={buckets} />
+  </div>
+
   );
 }

@@ -1,3 +1,5 @@
+import Clock from "./Clock";
+
 export default function Header() {
   const now = new Date();
 
@@ -7,20 +9,19 @@ export default function Header() {
     day: "numeric",
   });
 
-  const time = now.toLocaleTimeString("fa-IR");
-
   return (
     <div className="header" style={{display:"flex",gap:"10px"}}>
 
       <div className="box" style={{flex:2}}>
         <h1>نت رادار</h1>
+
         <p>
-        وضعیت برقراری سرویس‌های پر استفاده در ایران
+          وضعیت برقراری سرویس‌های پر استفاده در ایران
         </p>
 
         <p style={{fontSize:"14px"}}>
-        نت رادار وضعیت دسترسی به برخی از سرویس‌های داخلی و خارجی را نشان می‌دهد.
-        برای دریافت اطلاعات بیشتر در مورد هر سرویس، روی آن کلیک کنید.
+          نت رادار وضعیت دسترسی به برخی از سرویس‌های داخلی و خارجی را نشان می‌دهد.
+          برای دریافت اطلاعات بیشتر در مورد هر سرویس، روی آن کلیک کنید.
         </p>
       </div>
 
@@ -28,7 +29,7 @@ export default function Header() {
 
         <div className="box" style={{direction:"ltr",textAlign:"left"}}>
           <div>{date}</div>
-          <div>{time}</div>
+          <Clock />
         </div>
 
         <a
@@ -39,6 +40,14 @@ export default function Header() {
             حمایت
           </div>
         </a>
+
+        <div className="box" style={{fontSize:"13px",lineHeight:"1.7"}}>
+          راهنمای رنگ‌ها
+          <div>🟢 دسترسی پایدار</div>
+          <div>🔵 در دسترس اما بدون داده پینگ</div>
+          <div>🟡 ناپایداری در دسترسی</div>
+          <div>🔴 قطعی</div>
+        </div>
 
       </div>
 

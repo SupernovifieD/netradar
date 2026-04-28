@@ -1,6 +1,8 @@
 export default function Footer() {
 
-  const year = new Date().getFullYear();
+  const jalaliYear = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+    year: "numeric"
+  }).format(new Date());
 
   return (
     <footer style={{marginTop:"40px",textAlign:"center"}}>
@@ -13,9 +15,10 @@ export default function Footer() {
 
       </div>
 
-      <div style={{marginTop:"10px"}}>
-        {year}
+      <div style={{marginTop:"10px", textAlign:"center", opacity:0.7}}>
+        {jalaliYear}
       </div>
+
 
     </footer>
   );

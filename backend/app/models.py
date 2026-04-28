@@ -35,7 +35,7 @@ class CheckResult:
         return results
     
     @staticmethod
-    def get_by_service(service, limit=50):
+    def get_by_service(service, limit=2000):
         """Get check results for a specific service"""
         conn = sqlite3.connect(Config.DATABASE_PATH)
         conn.row_factory = sqlite3.Row

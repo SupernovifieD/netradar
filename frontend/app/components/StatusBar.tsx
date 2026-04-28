@@ -39,8 +39,8 @@ export default function StatusBar({
           key={i}
           title={
             `${new Date(b.start).toLocaleTimeString("fa-IR",{hour:'2-digit',minute:'2-digit'})}
-            تا
-            ${new Date(b.end).toLocaleTimeString("fa-IR",{hour:'2-digit',minute:'2-digit'})}
+            \nتا
+            \n${new Date(b.end).toLocaleTimeString("fa-IR",{hour:'2-digit',minute:'2-digit'})}
             \nوضعیت: ${translateStatus(b.color)}`
             }
           style={{

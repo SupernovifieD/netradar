@@ -1,6 +1,6 @@
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import ServiceCard from "./components/ServiceCard";
+import ServiceList from "./components/ServiceList";
 import { getServiceBuckets } from "@/lib/api";
 
 export default async function Home() {
@@ -14,13 +14,7 @@ export default async function Home() {
 
       <hr/>
 
-      {services.map(s => (
-        <ServiceCard
-          key={s.service}
-          name={s.service}
-          buckets={s.buckets}
-        />
-      ))}
+      <ServiceList initialServices={services} />
 
       <Footer/>
 

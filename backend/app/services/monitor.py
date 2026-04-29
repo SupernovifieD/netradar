@@ -1,5 +1,6 @@
 import time
 import threading
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
@@ -13,9 +14,11 @@ class ServiceMonitor:
         self.thread = None
     
     def load_services(self):
-        """Load services from services.txt"""
+        """Load services from services.json"""
         with open(Config.SERVICES_FILE) as f:
-            return [line.strip() for line in f if line.strip()]
+            services = json.load(f)
+
+        return [s["domain"] for s in services]
     
     def run_check_cycle(self):
         """Run one complete check cycle for all services"""

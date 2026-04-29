@@ -1,3 +1,5 @@
+import json
+from config import Config
 from flask import Blueprint, jsonify, request
 from app.models import CheckResult
 from app.services.monitor import monitor
@@ -68,3 +70,14 @@ def health():
         'success': True,
         'status': 'healthy'
     })
+
+@bp.route('/services', methods=['GET'])
+def get_services():
+    with open(Config.SERVICES_FILE) as f:
+        services = json.load(f)
+
+    return jsonify({
+        "success": True,
+        "data": services
+    })
+

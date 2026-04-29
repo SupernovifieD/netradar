@@ -22,29 +22,31 @@ def init_db(db_path):
     """Create database tables if they don't exist"""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    
+
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS checks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             service TEXT NOT NULL,
             latency TEXT,
             packet_loss TEXT,
             dns TEXT,
             tcp TEXT,
-            status TEXT
+            status TEXT,
+            date TEXT,
+            time TEXT
         )
     ''')
-    
+
     cursor.execute('''
-        CREATE INDEX IF NOT EXISTS idx_service_timestamp 
-        ON checks(service, timestamp DESC)
+        CREATE INDEX IF NOT EXISTS idx_service_datetime
+        ON checks(service, date DESC, time DESC)
     ''')
-    
+
     cursor.execute('''
-        CREATE INDEX IF NOT EXISTS idx_timestamp 
-        ON checks(timestamp DESC)
+        CREATE INDEX IF NOT EXISTS idx_datetime
+        ON checks(date DESC, time DESC)
     ''')
-    
+
     conn.commit()
     conn.close()
+

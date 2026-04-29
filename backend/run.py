@@ -15,6 +15,7 @@ if __name__ == '__main__':
     print("  GET  /api/status          - Current status of all services")
     print("  GET  /api/history         - Recent check history")
     print("  GET  /api/history/24h     - 24h check history")
+    print("  GET  /api/services        - Services metadata")    
     print("  GET  /api/service/<name>  - History for specific service")
     print("  POST /api/monitor/start   - Start monitoring")
     print("  POST /api/monitor/stop    - Stop monitoring")

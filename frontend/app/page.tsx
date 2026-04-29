@@ -12,8 +12,6 @@ export default async function Home() {
 
       <Header/>
 
-      <hr/>
-
       <ServiceList initialServices={services} />
 
       <Footer/>

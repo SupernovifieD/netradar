@@ -1,11 +1,11 @@
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ServiceList from "./components/ServiceList";
-import { getServiceBuckets } from "@/lib/api";
+import { getFullServiceData } from "@/lib/api";
 
 export default async function Home() {
 
-  const services = await getServiceBuckets();
+  const services = await getFullServiceData();
 
   return (
     <main className="container">

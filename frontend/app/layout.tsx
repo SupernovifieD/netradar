@@ -13,7 +13,9 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl">
       <body>
-        {children}
+        <div className="page-wrapper">
+          {children}
+        </div>
       </body>
     </html>
   );

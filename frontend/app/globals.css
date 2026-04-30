@@ -2,12 +2,46 @@
   box-sizing: border-box;
 }
 
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/vazirmatn/Vazirmatn-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/vazirmatn/Vazirmatn-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/vazirmatn/Vazirmatn-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+input,
+select,
+button,
+textarea {
+  font-family: inherit;
+}
+
 body {
   margin: 0;
   background: #111;
   color: #eee;
-  font-family: sans-serif;
+  font-family: "Vazirmatn" ,sans-serif;
   direction: rtl;
+  line-height: 1.7;
+  display: flex;
+  flex-direction: column;
 }
 
 a {
@@ -17,8 +51,12 @@ a {
 
 .container {
   max-width: 1100px;
-  margin: auto;
+  margin-inline: auto;
   padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .box {
@@ -32,6 +70,36 @@ hr {
   border-top: 1px solid #444;
   margin: 25px 0;
 }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  /* padding: 0; */
+}
+
+.page-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.simple-page {
+  flex: 1; /* Push footer down */
+}
+
+footer {
+  margin-top: auto; /* Stick to bottom */
+}
+
+p a {
+  color: #4ea3ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+p a:hover {
+  text-decoration: underline;
+}
+
 
 /* ============================= */
 /*         Control Bar           */
@@ -76,6 +144,7 @@ hr {
 .controls-center {
   justify-content: center;
   gap: 10px;
+  direction: rtl;
 }
 
 /* Right zone (search) */
@@ -211,3 +280,64 @@ hr {
     box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.0);
   }
 }
+
+/* ============================= */
+/*       Responsive Styling      */
+/* ============================= */
+
+.simple-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.simple-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.simple-header h1 {
+  font-size: 24px;
+  margin: 0;
+}
+
+.back-button {
+  text-decoration: none;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.back-button:hover {
+  opacity: 1;
+}
+
+.simple-content {
+  padding: 20px;
+  line-height: 1.9;
+  font-size: 15px;
+}
+
+.simple-content h3 {
+  margin-top: 20px;
+  margin-bottom: 8px;
+  font-size: 17px;
+}
+
+/* mobile */
+
+@media (max-width: 600px) {
+  .simple-page {
+    padding: 16px;
+  }
+
+  .simple-header h1 {
+    font-size: 20px;
+  }
+
+  .simple-content {
+    font-size: 14px;
+  }
+}
+

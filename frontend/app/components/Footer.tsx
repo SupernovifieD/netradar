@@ -9,8 +9,9 @@ export default function Footer() {
 
       <div style={{display:"flex",justifyContent:"center",gap:"20px"}}>
 
-        <a href="#">درباره</a>
-        <a href="#">سؤالات رایج</a>
+        <a href="/about">درباره</a>
+        <a href="/faq">سؤالات رایج</a>
+        <a href="https://github.com/SupernovifieD/netradar">گیت هاب</a>
         <a href="https://daramet.com/netradar">حمایت</a>
 
       </div>

@@ -71,10 +71,10 @@ export default function ServiceList({ initialServices }) {
             value={sort}
             onChange={(e) => setSort(e.target.value)}
           >
-            <option value="latency-fast">Fastest</option>
-            <option value="latency-slow">Slowest</option>
-            <option value="status-up">Up services</option>
-            <option value="status-down">Down services</option>
+            <option value="latency-fast">سریعترین سرویس</option>
+            <option value="latency-slow">کندترین سرویس</option>
+            <option value="status-up">سرویس‌های در دسترس</option>
+            <option value="status-down">سرویس‌های خارج از دسترس</option>
           </select>
         </div>
 
@@ -84,21 +84,21 @@ export default function ServiceList({ initialServices }) {
             className={`filter-btn ${filter === "all" ? "active" : ""}`}
             onClick={() => setFilter("all")}
           >
-            All
+            همه
           </button>
 
           <button
             className={`filter-btn ${filter === "iranian" ? "active" : ""}`}
             onClick={() => setFilter("iranian")}
           >
-            Iranian
+            سرویس‌های داخلی
           </button>
 
           <button
             className={`filter-btn ${filter === "international" ? "active" : ""}`}
             onClick={() => setFilter("international")}
           >
-            International
+            سرویس‌های خارجی
           </button>
         </div>
 

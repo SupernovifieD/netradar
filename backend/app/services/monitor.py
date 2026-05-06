@@ -30,6 +30,7 @@ class ServiceMonitor:
     def run_check_cycle(self) -> None:
         """Run one complete concurrent check cycle for all configured services."""
         services = self.load_services()
+        rows_to_persist: list[tuple[str, str, str, str, str, str]] = []
 
         with ThreadPoolExecutor(max_workers=Config.MAX_WORKERS) as executor:
             futures = {executor.submit(check_service, service): service for service in services}
@@ -38,8 +39,7 @@ class ServiceMonitor:
                 service = futures[future]
                 try:
                     svc, dns, tcp, latency, packet_loss, status = future.result()
-
-                    CheckResult.save(svc, latency, packet_loss, dns, tcp, status)
+                    rows_to_persist.append((svc, latency, packet_loss, dns, tcp, status))
 
                     print(
                         f"[{datetime.now().strftime('%H:%M:%S')}] [{svc}] "
@@ -47,6 +47,16 @@ class ServiceMonitor:
                     )
                 except Exception as exc:
                     print(f"Error checking {service}: {exc}")
+
+        try:
+            CheckResult.save_many(rows_to_persist)
+        except Exception as exc:
+            print(f"Error persisting check cycle: {exc}")
+            for row in rows_to_persist:
+                try:
+                    CheckResult.save(*row)
+                except Exception as row_exc:
+                    print(f"Error persisting row for {row[0]}: {row_exc}")
 
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Cycle completed\n")
 

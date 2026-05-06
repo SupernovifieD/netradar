@@ -8,6 +8,8 @@ from typing import Any
 from app.db import get_connection
 from config import Config
 
+CheckWriteRow = tuple[str, str, str, str, str, str]
+
 
 class CheckResult:
     """CRUD-style helpers for the ``checks`` SQLite table."""
@@ -26,18 +28,33 @@ class CheckResult:
         The schema stores date and time as separate text fields to preserve
         compatibility with existing queries and dashboard parsing.
         """
-        now = datetime.now()
-        date = now.strftime("%Y-%m-%d")
-        time = now.strftime("%H:%M:%S")
+        CheckResult.save_many([(service, latency, packet_loss, dns, tcp, status)])
+
+    @staticmethod
+    def save_many(rows: list[CheckWriteRow]) -> None:
+        """Persist multiple monitoring rows in a single transaction.
+
+        Batching writes drastically reduces lock churn when many services are
+        checked in the same cycle.
+        """
+        if not rows:
+            return
+
+        dated_rows = []
+        for service, latency, packet_loss, dns, tcp, status in rows:
+            now = datetime.now()
+            date = now.strftime("%Y-%m-%d")
+            time = now.strftime("%H:%M:%S")
+            dated_rows.append((service, latency, packet_loss, dns, tcp, status, date, time))
 
         with get_connection(Config.DATABASE_PATH) as connection:
             cursor = connection.cursor()
-            cursor.execute(
+            cursor.executemany(
                 """
                 INSERT INTO checks (service, latency, packet_loss, dns, tcp, status, date, time)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (service, latency, packet_loss, dns, tcp, status, date, time),
+                dated_rows,
             )
             connection.commit()
 

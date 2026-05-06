@@ -40,6 +40,12 @@ Indexes:
 - `idx_service_datetime` on `(service, date DESC, time DESC)`
 - `idx_datetime` on `(date DESC, time DESC)`
 
+Runtime SQLite settings:
+
+- `WAL` journal mode for better read/write concurrency.
+- `busy_timeout=30000` to wait for transient locks before failing.
+- Batched insert writes per monitor cycle to reduce lock churn.
+
 ## Running locally
 
 From `backend/`:

@@ -35,11 +35,16 @@ export default function Header() {
 
   const now = new Date();
 
-  const date = now.toLocaleDateString("fa-IR", {
+  const dateParts = new Intl.DateTimeFormat("fa-IR", {
     year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+
+  const year = dateParts.find((p) => p.type === "year")?.value ?? "";
+  const month = dateParts.find((p) => p.type === "month")?.value ?? "";
+  const day = dateParts.find((p) => p.type === "day")?.value ?? "";
+  const date = `${year}, ${month}, ${day}`;
 
   return (
     <div style={{ display: "flex", gap: "10px" }}>
@@ -55,7 +60,18 @@ export default function Header() {
       </div>
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
-        <div className="box" style={{ direction: "ltr", textAlign: "left" }}>
+        <div
+          className="box"
+          style={{
+            direction: "ltr",
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "4px",
+          }}
+        >
           <div>{date}</div>
           <Clock />
         </div>

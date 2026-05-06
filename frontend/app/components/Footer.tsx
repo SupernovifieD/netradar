@@ -1,26 +1,20 @@
 export default function Footer() {
-
   const jalaliYear = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-    year: "numeric"
+    year: "numeric",
   }).format(new Date());
 
   return (
-    <footer style={{marginTop:"40px",textAlign:"center"}}>
-
-      <div style={{display:"flex",justifyContent:"center",gap:"20px"}}>
-
+    <footer className="site-footer">
+      <div className="site-footer-links">
         <a href="/about">درباره</a>
         <a href="/faq">سؤالات رایج</a>
         <a href="https://github.com/SupernovifieD/netradar">گیت هاب</a>
         <a href="https://daramet.com/netradar">حمایت</a>
-
       </div>
 
-      <div style={{marginTop:"10px", textAlign:"center", opacity:0.7}}>
+      <div className="site-footer-year">
         {jalaliYear}
       </div>
-
-
     </footer>
   );
 }

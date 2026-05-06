@@ -1,52 +1,34 @@
+"""Application factory for the NetRadar backend service.
+
+This module wires together Flask extensions, configuration, database
+initialization, and API routes.
+"""
+
 from flask import Flask
 from flask_cors import CORS
-import sqlite3
-import os
 
-def create_app(config_class='config.Config'):
+from app.db import init_db
+
+
+def create_app(config_class: str = "config.Config") -> Flask:
+    """Create and configure a Flask application instance.
+
+    Args:
+        config_class: Dotted import path for the configuration object.
+
+    Returns:
+        A configured Flask application ready to run.
+    """
     app = Flask(__name__)
     app.config.from_object(config_class)
-    
+
+    # The frontend is served from a separate origin in development.
     CORS(app)
-    
-    # Initialize database
-    init_db(app.config['DATABASE_PATH'])
-    
-    # Register routes
+
+    # Ensure required SQLite schema/indexes are available before requests.
+    init_db(app.config["DATABASE_PATH"])
+
     from app.routes import api
+
     app.register_blueprint(api.bp)
-    
     return app
-
-def init_db(db_path):
-    """Create database tables if they don't exist"""
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS checks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            service TEXT NOT NULL,
-            latency TEXT,
-            packet_loss TEXT,
-            dns TEXT,
-            tcp TEXT,
-            status TEXT,
-            date TEXT,
-            time TEXT
-        )
-    ''')
-
-    cursor.execute('''
-        CREATE INDEX IF NOT EXISTS idx_service_datetime
-        ON checks(service, date DESC, time DESC)
-    ''')
-
-    cursor.execute('''
-        CREATE INDEX IF NOT EXISTS idx_datetime
-        ON checks(date DESC, time DESC)
-    ''')
-
-    conn.commit()
-    conn.close()
-

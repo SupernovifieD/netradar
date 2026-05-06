@@ -70,11 +70,11 @@ export default function Header() {
         </a>
 
         <div className="box" style={{ fontSize: "13px", lineHeight: "1.7" }}>
-          راهنمای رنگ‌ها
-          <div>🟢 دسترسی پایدار</div>
-          <div>🔵 در دسترس اما بدون داده پینگ</div>
+          راهنمای رنگ‌ها:
+          <div>🟢 سرویس در دسترس</div>
+          <div>🔵 سرویس در دسترس اما بدون داده پینگ</div>
           <div>🟡 ناپایداری در دسترسی</div>
-          <div>🔴 قطعی</div>
+          <div>🔴 قطعی سرویس</div>
         </div>
       </div>
     </div>

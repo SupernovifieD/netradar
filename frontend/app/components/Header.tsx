@@ -47,45 +47,40 @@ export default function Header() {
   const date = `${year}, ${month}, ${day}`;
 
   return (
-    <div style={{ display: "flex", gap: "10px" }}>
-      <div className="box" style={{ flex: 2 }}>
+    <div className="header">
+      <div className="box header-info">
         <h1>نت رادار</h1>
 
         <p>وضعیت برقراری سرویس‌های پر استفاده در ایران</p>
 
-        <p style={{ fontSize: "14px" }}>
+        <p className="header-description">
           نت رادار وضعیت دسترسی به برخی از سرویس‌های داخلی و خارجی را نشان
           می‌دهد. برای دریافت اطلاعات بیشتر در مورد هر سرویس، روی آن کلیک کنید.
         </p>
       </div>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
-        <div
-          className="box"
-          style={{
-            direction: "ltr",
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "4px",
-          }}
-        >
-          <div>{date}</div>
-          <Clock />
+      <div className="header-side">
+        <div className="header-top-row">
+          <div className="box header-datetime">
+            <div>{date}</div>
+            <Clock />
+          </div>
+
+          <a
+            href="https://daramet.com/netradar"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="header-support-link"
+          >
+            <div
+              className={`box support-button header-support-button ${highlightSupport ? "support-button--highlight" : ""}`}
+            >
+              حمایت
+            </div>
+          </a>
         </div>
 
-        <a href="https://daramet.com/netradar" target="_blank">
-          <div
-            className={`box support-button ${highlightSupport ? "support-button--highlight" : ""}`}
-            style={{ textAlign: "center" }}
-          >
-            حمایت
-          </div>
-        </a>
-
-        <div className="box" style={{ fontSize: "13px", lineHeight: "1.7" }}>
+        <div className="box header-guide">
           راهنمای رنگ‌ها:
           <div>🟢 سرویس در دسترس</div>
           <div>🔵 سرویس در دسترس اما بدون داده پینگ</div>

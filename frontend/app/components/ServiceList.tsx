@@ -3,12 +3,18 @@
 import { useEffect, useState } from "react";
 import ServiceCard from "./ServiceCard";
 import { getFullServiceData } from "@/lib/api";
+import type { FullServiceCardData } from "@/types/service";
 
-export default function ServiceList({ initialServices }) {
-  const [services, setServices] = useState([]);
+interface ServiceListProps {
+  initialServices: FullServiceCardData[];
+}
+
+export default function ServiceList({ initialServices }: ServiceListProps) {
+  const [services, setServices] = useState<FullServiceCardData[]>(initialServices ?? []);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("latency-fast");
   const [filter, setFilter] = useState("all");
+  const [isMobile, setIsMobile] = useState(false);
 
   async function refresh() {
     const data = await getFullServiceData();
@@ -16,8 +22,21 @@ export default function ServiceList({ initialServices }) {
   }
 
   useEffect(() => {
-    refresh();
-    const interval = setInterval(refresh, 60000);
+    const media = window.matchMedia("(max-width: 600px)");
+    const onChange = () => setIsMobile(media.matches);
+
+    onChange();
+    media.addEventListener("change", onChange);
+
+    return () => {
+      media.removeEventListener("change", onChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      void refresh();
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -61,10 +80,7 @@ export default function ServiceList({ initialServices }) {
 
   return (
     <>
-      {/* Controls */}
       <div className="controls">
-
-        {/* Sorting - left */}
         <div className="controls-left">
           <select
             className="control-input"
@@ -78,7 +94,6 @@ export default function ServiceList({ initialServices }) {
           </select>
         </div>
 
-        {/* Filters - center */}
         <div className="controls-center">
           <button
             className={`filter-btn ${filter === "all" ? "active" : ""}`}
@@ -102,7 +117,6 @@ export default function ServiceList({ initialServices }) {
           </button>
         </div>
 
-        {/* Search - right */}
         <div className="controls-right">
           <input
             className="control-input"
@@ -112,13 +126,62 @@ export default function ServiceList({ initialServices }) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-
       </div>
 
+      <div className="controls-mobile-search">
+        <input
+          className="control-input"
+          type="text"
+          placeholder="جستجوی سرویس ..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
-      {/* Service Cards */}
+      <div className="controls-mobile">
+        <div className="controls-mobile-filters">
+          <button
+            className={`filter-btn ${filter === "all" ? "active" : ""}`}
+            onClick={() => setFilter("all")}
+          >
+            همه
+          </button>
+
+          <button
+            className={`filter-btn ${filter === "iranian" ? "active" : ""}`}
+            onClick={() => setFilter("iranian")}
+          >
+            سرویس‌های داخلی
+          </button>
+
+          <button
+            className={`filter-btn ${filter === "international" ? "active" : ""}`}
+            onClick={() => setFilter("international")}
+          >
+            سرویس‌های خارجی
+          </button>
+        </div>
+
+        <div className="controls-mobile-sort">
+          <select
+            className="control-input"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
+            <option value="latency-fast">سریعترین سرویس</option>
+            <option value="latency-slow">کندترین سرویس</option>
+            <option value="status-up">سرویس‌های در دسترس</option>
+            <option value="status-down">سرویس‌های خارج از دسترس</option>
+          </select>
+        </div>
+      </div>
+
       {filtered.map((s) => (
-        <ServiceCard key={s.meta.domain} meta={s.meta} buckets={s.buckets} />
+        <ServiceCard
+          key={s.meta.domain}
+          meta={s.meta}
+          buckets={isMobile ? s.buckets.slice(-24) : s.buckets}
+        />
       ))}
     </>
   );

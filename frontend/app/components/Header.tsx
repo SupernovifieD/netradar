@@ -42,7 +42,7 @@ export default function Header() {
   });
 
   return (
-    <div className="header" style={{ display: "flex", gap: "10px" }}>
+    <div style={{ display: "flex", gap: "10px" }}>
       <div className="box" style={{ flex: 2 }}>
         <h1>نت رادار</h1>
 

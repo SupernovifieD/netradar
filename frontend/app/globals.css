@@ -2,6 +2,10 @@
   box-sizing: border-box;
 }
 
+/* ============================= */
+/*       Font Definitions        */
+/* ============================= */
+
 @font-face {
   font-family: "Vazirmatn";
   src: url("/fonts/vazirmatn/Vazirmatn-Regular.woff2") format("woff2");
@@ -33,21 +37,45 @@ textarea {
   font-family: inherit;
 }
 
+/* ============================= */
+/*         Base Layout           */
+/* ============================= */
+
 body {
   margin: 0;
   background: #111;
   color: #eee;
-  font-family: "Vazirmatn" ,sans-serif;
+  font-family: "Vazirmatn", sans-serif;
   direction: rtl;
   line-height: 1.7;
   display: flex;
   flex-direction: column;
 }
 
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
 a {
   color: #9ad;
   text-decoration: none;
 }
+
+p a {
+  color: #4ea3ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+p a:hover {
+  text-decoration: underline;
+}
+
+/* ============================= */
+/*        Shared Blocks          */
+/* ============================= */
 
 .container {
   max-width: 1100px;
@@ -65,41 +93,15 @@ a {
   background: #1a1a1a;
 }
 
-hr {
-  border: none;
-  border-top: 1px solid #444;
-  margin: 25px 0;
-}
-
-html, body {
-  height: 100%;
-  margin: 0;
-  /* padding: 0; */
-}
-
 .page-wrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.simple-page {
-  flex: 1; /* Push footer down */
-}
-
 footer {
-  margin-top: auto; /* Stick to bottom */
+  margin-top: auto;
 }
-
-p a {
-  color: #4ea3ff;
-  text-decoration: none;
-  font-weight: 600;
-}
-p a:hover {
-  text-decoration: underline;
-}
-
 
 /* ============================= */
 /*         Control Bar           */
@@ -117,7 +119,7 @@ p a:hover {
   padding: 14px 10px;
   margin-bottom: 20px;
 
-  direction: ltr; /* keep layout predictable */
+  direction: ltr;
 
   background: #111;
   backdrop-filter: blur(8px);
@@ -140,20 +142,18 @@ p a:hover {
   justify-content: flex-start;
 }
 
-/* Center zone (filters) */
 .controls-center {
   justify-content: center;
   gap: 10px;
   direction: rtl;
 }
 
-/* Right zone (search) */
 .controls-right {
   justify-content: flex-end;
 }
 
 /* ============================= */
-/* Inputs */
+/*        Control Inputs         */
 /* ============================= */
 
 .control-input {
@@ -172,7 +172,6 @@ p a:hover {
   background: #202020;
 }
 
-/* Make search Persian-friendly */
 .controls-right input {
   direction: rtl;
   text-align: right;
@@ -180,7 +179,7 @@ p a:hover {
 }
 
 /* ============================= */
-/* Filter Buttons */
+/*        Filter Buttons         */
 /* ============================= */
 
 .filter-btn {
@@ -206,7 +205,7 @@ p a:hover {
 }
 
 /* ============================= */
-/* STATUS BAR WITH TIMELINE     */
+/*      Status Bar Timeline      */
 /* ============================= */
 
 .status-wrapper {
@@ -215,14 +214,11 @@ p a:hover {
   margin-top: 10px;
 }
 
-/* Grid for buckets (same height as before) */
 .status-grid {
   display: flex;
   gap: 3px;
 }
 
-
-/* Individual bucket */
 .status-bucket {
   flex: 1;
   height: 30px;
@@ -230,14 +226,13 @@ p a:hover {
   position: relative;
 }
 
-/* Timeline below */
 .timeline {
   margin-top: 6px;
   font-size: 10px;
   color: #888;
   display: grid;
   text-align: center;
-  direction: ltr; /* time flows left → right */
+  direction: ltr;
 }
 
 .timeline-marker {
@@ -245,7 +240,7 @@ p a:hover {
 }
 
 /* ============================= */
-/*     Support Button Pulse      */
+/*      Support Button Pulse     */
 /* ============================= */
 
 .support-button {
@@ -282,13 +277,15 @@ p a:hover {
 }
 
 /* ============================= */
-/*       Responsive Styling      */
+/*          Simple Pages         */
 /* ============================= */
 
 .simple-page {
+  flex: 1;
   max-width: 900px;
   margin: 0 auto;
   padding: 20px;
+  width: 100%;
 }
 
 .simple-header {
@@ -296,11 +293,6 @@ p a:hover {
   align-items: center;
   gap: 16px;
   margin-bottom: 20px;
-}
-
-.simple-header h1 {
-  font-size: 24px;
-  margin: 0;
 }
 
 .back-button {
@@ -325,19 +317,16 @@ p a:hover {
   font-size: 17px;
 }
 
-/* mobile */
+/* ============================= */
+/*       Responsive Styling      */
+/* ============================= */
 
 @media (max-width: 600px) {
   .simple-page {
     padding: 16px;
   }
 
-  .simple-header h1 {
-    font-size: 20px;
-  }
-
   .simple-content {
     font-size: 14px;
   }
 }
-

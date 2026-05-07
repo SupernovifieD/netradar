@@ -4,15 +4,16 @@ const CHART_WIDTH = 640;
 const CHART_HEIGHT = 260;
 const MARGIN = { top: 16, right: 14, bottom: 34, left: 50 };
 
-function formatFaTime(timestamp: number): string {
-  return new Intl.DateTimeFormat("fa-IR", {
+function formatTime(timestamp: number): string {
+  return new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   }).format(new Date(timestamp));
 }
 
-function formatFaNumber(value: number, decimals = 1): string {
-  return value.toLocaleString("fa-IR", {
+function formatNumber(value: number, decimals = 1): string {
+  return value.toLocaleString("en-US", {
     maximumFractionDigits: decimals,
     minimumFractionDigits: 0,
   });
@@ -119,7 +120,7 @@ export default function TimeSeriesChart({
                 className="service-chart-grid-line"
               />
               <text x={MARGIN.left - 8} y={y + 4} textAnchor="end" className="service-chart-axis-label">
-                {formatFaNumber(tickValue)}
+                {formatNumber(tickValue)}
               </text>
             </g>
           );
@@ -137,23 +138,13 @@ export default function TimeSeriesChart({
               y2={MARGIN.top + chartInnerHeight + 5}
               className="service-chart-grid-line"
             />
-            <text
-              x={projectX(timestamp)}
-              y={CHART_HEIGHT - 8}
-              textAnchor="middle"
-              className="service-chart-axis-label"
-            >
-              {formatFaTime(timestamp)}
+            <text x={projectX(timestamp)} y={CHART_HEIGHT - 8} textAnchor="middle" className="service-chart-axis-label">
+              {formatTime(timestamp)}
             </text>
           </g>
         ))}
 
-        <text
-          x={MARGIN.left}
-          y={14}
-          textAnchor="start"
-          className="service-chart-unit"
-        >
+        <text x={MARGIN.left} y={14} textAnchor="start" className="service-chart-unit">
           {unit}
         </text>
       </svg>

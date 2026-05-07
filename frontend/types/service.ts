@@ -6,20 +6,20 @@ export interface ServiceCheck {
   dns: string;
   tcp: string;
   status: string;
-  date: string;   // "2026-04-29"
-  time: string;   // "20:12:51"
+  date: string; // "2026-04-29"
+  time: string; // "20:12:51"
 }
 
 export interface ServiceMeta {
-  id?: string;           // optional in current services.json
-  name: string;          // Display name e.g. "Digikala"
-  domain: string;        // digikala.com
-  group: string;         // "Iranian"
-  category: string;      // "general services"
+  id?: string; // optional in current services.json
+  name: string; // display name, e.g. "Google"
+  domain: string; // e.g. "google.com"
+  group: string; // e.g. "International Service"
+  category: string; // e.g. "General Services"
 }
 
 export interface ServiceBuckets {
-  service: string;  // domain
+  service: string;
   buckets: {
     start: string;
     end: string;

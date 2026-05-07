@@ -4,35 +4,33 @@ import Footer from "../components/Footer";
 export default function FAQPage() {
   return (
     <div className="simple-page">
-
       <div className="box simple-header">
         <Link href="/" className="back-button">
-          ← بازگشت به صفحه اصلی
+          ← Back to home
         </Link>
       </div>
 
       <div className="box simple-content">
-        <h1>سوالات رایج</h1>
+        <h1>Frequently Asked Questions</h1>
 
-        <h3>نت رادار چه چیزی را اندازه‌گیری می‌کند؟</h3>
+        <h3>What does NetRadar measure?</h3>
         <p>
-          این سرویس دسترسی به برخی سرویس‌های اینترنتی را از طریق ... و همچنین سرعت دسترسی به سرویس مورد نظر بررسی می‌کند و نتیجه را
-          در قالب وضعیت اتصال نمایش می‌دهد.
+          NetRadar checks service reachability (DNS and HTTP/TCP) and network latency, then
+          displays results as status timelines and charts.
         </p>
 
-        <h3>آیا نتایج همیشه دقیق هستند؟</h3>
+        <h3>Are results always exact for every user?</h3>
         <p>
-          نتایج بر اساس تست‌های خودکار هستند و ممکن است در برخی شرایط با تجربه
-          واقعی کاربران تفاوت داشته باشند. ذکر این نکته حائز اهمیت است که ممکن است در دیتاسنترهای مورد استفاده ما 
-          سرویسی برقرار باشد، اما برای یک کاربر دسترسی به آن سرویس برقرار نباشد و بالعکس. سرورهای مورد استفاده نت رادار در داخل ایران قرار دارند.
+          No. Measurements are automated from monitoring nodes and may differ from an individual
+          user’s local network conditions unless run locally. On a local machine, the numbers reflect availability
+          based on your network connectivity.
         </p>
 
-        <h3>چرا بعضی سرویس‌ها ناپایدار نشان داده می‌شوند؟</h3>
+        <h3>Why can a service appear unstable?</h3>
         <p>
-          ناپایداری معمولاً زمانی ثبت می‌شود که در بازه زمانی مشخص بخشی از تست‌ها
-          با شکست مواجه شوند.
+          Instability usually means part of the checks failed or latency varied significantly
+          during the selected time window.
         </p>
-
       </div>
 
       <Footer />

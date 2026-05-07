@@ -1,6 +1,6 @@
 # NetRadar
 
-NetRadar is an open-source internet service monitoring dashboard focused on service accessibility.
+NetRadar is an open-source dashboard for monitoring internet service availability and basic performance.
 
 It has two parts:
 - `backend/`: a Flask API + background monitor that checks services and stores results.
@@ -8,7 +8,7 @@ It has two parts:
 
 ## What This Project Shows
 
-- Live status of many popular services (Iranian and international).
+- Live status of popular international services.
 - Color-coded status timelines (bucket view) for quick health checks.
 - Dedicated page per service at `/<service-domain>`.
 - Daily historical status using aggregated daily data.
@@ -84,4 +84,4 @@ For backend architecture, full endpoint docs, aggregation behavior, and operatio
 
 ## License
 
-This project is open source under MIT license. 
+This project is open source under MIT license.

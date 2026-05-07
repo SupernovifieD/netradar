@@ -18,12 +18,14 @@ export default function ServiceCard({
     bucketList: { start: string; end: string; color: string }[],
     limit: number
   ): boolean {
-    let c = 0;
-    for (const x of bucketList) {
-      if (x.color === "red") {
-        c++;
-        if (c >= limit) return true;
-      } else c = 0;
+    let count = 0;
+    for (const bucket of bucketList) {
+      if (bucket.color === "red") {
+        count += 1;
+        if (count >= limit) return true;
+      } else {
+        count = 0;
+      }
     }
     return false;
   }
@@ -41,7 +43,6 @@ export default function ServiceCard({
     >
       {showMeta && (
         <>
-          {/* Row 1: Name + outage */}
           <div
             style={{
               fontWeight: "bold",
@@ -54,21 +55,14 @@ export default function ServiceCard({
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span>{meta.name}</span>
-
-              {manyReds && (
-                <span style={{ color: "red", fontSize: "14px", direction: "rtl" }}>
-                  خارج از دسترس
-                </span>
-              )}
+              {manyReds && <span style={{ color: "red", fontSize: "14px" }}>Outage</span>}
             </div>
           </div>
 
-          {/* Row 2: Metadata (RTL) */}
           <div
             style={{
-              direction: "rtl",
               fontSize: "14px",
-              color: "#555",
+              color: "#9c9c9c",
               marginBottom: "10px",
               lineHeight: "1.5",
             }}
@@ -106,7 +100,6 @@ export default function ServiceCard({
 
       {!showMeta && <div style={{ marginBottom: "2px" }} />}
 
-      {/* Row 3: Status buckets */}
       <StatusBar buckets={buckets} />
     </div>
   );

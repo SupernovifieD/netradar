@@ -1,22 +1,18 @@
 import Link from "next/link";
 
 export default function Footer() {
-  const jalaliYear = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-    year: "numeric",
-  }).format(new Date());
+  const year = new Date().getFullYear();
 
   return (
     <footer className="site-footer">
       <div className="site-footer-links">
-        <Link href="/about">درباره</Link>
-        <Link href="/faq">سؤالات رایج</Link>
-        <a href="https://github.com/SupernovifieD/netradar">گیت هاب</a>
-        <a href="https://daramet.com/netradar">حمایت</a>
+        <Link href="/about">About</Link>
+        <Link href="/faq">FAQ</Link>
+        <a href="https://github.com/SupernovifieD/netradar">GitHub</a>
+        <a href="https://daramet.com/netradar">Support</a>
       </div>
 
-      <div className="site-footer-year">
-        {jalaliYear}
-      </div>
+      <div className="site-footer-year">{year}</div>
     </footer>
   );
 }

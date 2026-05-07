@@ -5,7 +5,7 @@ export default function StatusBar({
 }) {
   if (!buckets?.length) return null;
 
-  // Reverse buckets so newest is left (your original behavior)
+  // Newest on the left.
   const reversed = [...buckets].reverse();
 
   function colorToHex(c: string) {
@@ -32,81 +32,68 @@ export default function StatusBar({
   function translateStatus(c: string) {
     switch (c) {
       case "green":
-        return "پایدار";
+        return "Stable";
       case "darkgreen":
-        return "اختلال جزئی";
+        return "Minor instability";
       case "orange":
-        return "کندی سرویس";
+        return "High latency";
       case "blue":
-        return "بدون داده پینگ";
+        return "No ping data";
       case "darkblue":
-        return "پاسخ ناقص";
+        return "Partial response";
       case "red":
-        return "قطع";
+        return "Outage";
       case "grey":
-        return "بدون داده";
+        return "No data";
       default:
-        return "نامشخص";
+        return "Unknown";
     }
   }
 
-  function toFaTime(t: string) {
-    return new Intl.DateTimeFormat("fa-IR", {
+  function toTime(value: string) {
+    return new Intl.DateTimeFormat("en-GB", {
       hour: "2-digit",
       minute: "2-digit",
-    }).format(new Date(t));
+      hour12: false,
+    }).format(new Date(value));
   }
 
-  // === Timeline markers ===
-  // first + every 4 buckets + last
   const markers: string[] = [];
-  markers.push(toFaTime(reversed[0].start));
+  markers.push(toTime(reversed[0].start));
 
   for (let i = 4; i < reversed.length; i += 4) {
-    markers.push(toFaTime(reversed[i].start));
+    markers.push(toTime(reversed[i].start));
   }
 
-  markers.push(toFaTime(reversed[reversed.length - 1].end));
+  markers.push(toTime(reversed[reversed.length - 1].end));
 
-  // Needed for grid alignment
   const reversedMarkers = [...markers].reverse();
   const groupCount = reversedMarkers.length;
 
-
   return (
     <div className="status-wrapper">
-
-      {/* Buckets */}
       <div className="status-grid">
-        {reversed.map((b, i) => (
+        {reversed.map((bucket, index) => (
           <div
-            key={i}
+            key={index}
             className="status-bucket"
-            style={{
-              background: colorToHex(b.color),
-            }}
+            style={{ background: colorToHex(bucket.color) }}
             title={
-              `از ${toFaTime(b.start)}\n` +
-              `تا ${toFaTime(b.end)}\n` +
-              `وضعیت: ${translateStatus(b.color)}`
+              `From ${toTime(bucket.start)}\n` +
+              `To ${toTime(bucket.end)}\n` +
+              `Status: ${translateStatus(bucket.color)}`
             }
-          >
-          </div>
+          />
         ))}
       </div>
 
-      {/* Timeline markers */}
-      <div
-        className="timeline"
-        style={{ gridTemplateColumns: `repeat(${groupCount}, 1fr)` }}
-      >
-        {reversedMarkers.map((m, i) => (
-          <div key={i} className="timeline-marker">
-            {m}
+      <div className="timeline" style={{ gridTemplateColumns: `repeat(${groupCount}, 1fr)` }}>
+        {reversedMarkers.map((marker, index) => (
+          <div key={index} className="timeline-marker">
+            {marker}
           </div>
         ))}
       </div>
     </div>
   );
 }
-

@@ -13,9 +13,5 @@ export default function Clock() {
     return () => clearInterval(interval);
   }, []);
 
-  return (
-    <div>
-      {time.toLocaleTimeString("fa-IR")}
-    </div>
-  );
+  return <div>{time.toLocaleTimeString("en-GB", { hour12: false })}</div>;
 }

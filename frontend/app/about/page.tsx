@@ -4,40 +4,35 @@ import Footer from "../components/Footer";
 export default function AboutPage() {
   return (
     <div className="simple-page">
-
       <div className="box simple-header">
         <Link href="/" className="back-button">
-          ← بازگشت به صفحه اصلی
+          ← Back to home
         </Link>
       </div>
 
       <div className="box simple-content">
-        <h1>درباره</h1>
+        <h1>About</h1>
 
         <p>
-          نت رادار ابزاری برای نمایش وضعیت دسترسی به سرویس‌های پر استفاده در ایران است.
+          NetRadar is an open-source project for monitoring internet service availability and
+          basic performance.
         </p>
 
         <p>
-          این سامانه به صورت دوره‌ای اتصال به سرویس‌های مختلف را بررسی می‌کند و نتیجه
-          را به شکل یک داشبورد ساده و قابل فهم نمایش می‌دهد.           هدف نت رادار فراهم کردن دیدی سریع از وضعیت دسترسی به سرویس‌های داخلی و خارجی
-          برای کاربران اینترنت در ایران است.
+          The platform runs scheduled checks, stores raw probe results, and presents them in
+          a simple dashboard so users can quickly understand service health over time.
         </p>
 
         <p>
-          نت رادار در زمان جنگ ایران در پایان سال ۱۴۰۴ ایجاد شد. این پروژه به صورت رایگان و به صورت اوپن سورس در اختیار عموم قرار گرفته است.
-          لطفا از این پروژه
-          <a href="https://daramet.com/netradar" target="_blank" rel="noopener noreferrer"> حمایت </a>
-          کنید.
-          علاوه بر این، برای ارائه پیشنهاد یا بهبود اجزا این پروژه، به صفحه
-          <a href="https://github.com/SupernovifieD/netradar" target="_blank" rel="noopener noreferrer"> گیت‌هاب </a>
-          این پروژه مراجعه کنید.
+          NetRadar is free to use and open source. If you want to support the project,
+          visit the <a href="https://daramet.com/netradar" target="_blank" rel="noopener noreferrer">support page</a>.
+          You can also contribute ideas or code on
+          <a href="https://github.com/SupernovifieD/netradar" target="_blank" rel="noopener noreferrer"> GitHub</a>.
         </p>
 
         <Link href="/changelog" style={{ display: "block", textAlign: "center" }}>
           v0.1.0
         </Link>
-
       </div>
 
       <Footer />

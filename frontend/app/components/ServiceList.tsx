@@ -1,20 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import ServiceCard from "./ServiceCard";
+import { useEffect, useState } from "react";
 import { getFullServiceData } from "@/lib/api";
 import type { FullServiceCardData } from "@/types/service";
+import ServiceCard from "./ServiceCard";
 
 interface ServiceListProps {
   initialServices: FullServiceCardData[];
 }
 
+type SortKey = "latency-fast" | "latency-slow" | "status-up" | "status-down";
+type FilterKey = "all" | "general" | "developer" | "streaming";
+
 export default function ServiceList({ initialServices }: ServiceListProps) {
   const [services, setServices] = useState<FullServiceCardData[]>(initialServices ?? []);
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState("latency-fast");
-  const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState<SortKey>("latency-fast");
+  const [filter, setFilter] = useState<FilterKey>("all");
   const [isMobile, setIsMobile] = useState(false);
 
   async function refresh() {
@@ -37,13 +40,13 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
   useEffect(() => {
     const interval = setInterval(() => {
       void refresh();
-    }, 60000);
+    }, 60_000);
     return () => clearInterval(interval);
   }, []);
 
   function latestLatency(service: FullServiceCardData): number {
     const last = service.buckets[service.buckets.length - 1];
-    return last?.avgLatency ?? Infinity;
+    return last?.avgLatency ?? Number.POSITIVE_INFINITY;
   }
 
   function latestColor(service: FullServiceCardData): string {
@@ -51,15 +54,15 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
     return last?.color ?? "grey";
   }
 
-  let filtered = services.filter((s) => {
-    const text =
-      s.meta.name.toLowerCase() + " " + s.meta.domain.toLowerCase();
+  let filtered = services.filter((service) => {
+    const text = `${service.meta.name} ${service.meta.domain}`.toLowerCase();
 
     if (!text.includes(search.toLowerCase())) return false;
 
     if (filter === "all") return true;
-    if (filter === "iranian") return s.meta.group === "Iranian Service";
-    if (filter === "international") return s.meta.group === "International Service";
+    if (filter === "general") return service.meta.category === "General Services";
+    if (filter === "developer") return service.meta.category === "Developer Tools";
+    if (filter === "streaming") return service.meta.category === "Streaming Services";
 
     return true;
   });
@@ -67,15 +70,8 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
   filtered = [...filtered].sort((a, b) => {
     if (sort === "latency-fast") return latestLatency(a) - latestLatency(b);
     if (sort === "latency-slow") return latestLatency(b) - latestLatency(a);
-
-    if (sort === "status-up") {
-      return latestColor(a) === "red" ? 1 : -1;
-    }
-
-    if (sort === "status-down") {
-      return latestColor(a) === "red" ? -1 : 1;
-    }
-
+    if (sort === "status-up") return latestColor(a) === "red" ? 1 : -1;
+    if (sort === "status-down") return latestColor(a) === "red" ? -1 : 1;
     return 0;
   });
 
@@ -83,38 +79,35 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
     <>
       <div className="controls">
         <div className="controls-left">
-          <select
-            className="control-input"
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-          >
-            <option value="latency-fast">سریعترین سرویس</option>
-            <option value="latency-slow">کندترین سرویس</option>
-            <option value="status-up">سرویس‌های در دسترس</option>
-            <option value="status-down">سرویس‌های خارج از دسترس</option>
+          <select className="control-input" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
+            <option value="latency-fast">Lowest latency</option>
+            <option value="latency-slow">Highest latency</option>
+            <option value="status-up">Most available</option>
+            <option value="status-down">Most unavailable</option>
           </select>
         </div>
 
         <div className="controls-center">
-          <button
-            className={`filter-btn ${filter === "all" ? "active" : ""}`}
-            onClick={() => setFilter("all")}
-          >
-            همه
+          <button className={`filter-btn ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>
+            All
           </button>
-
           <button
-            className={`filter-btn ${filter === "iranian" ? "active" : ""}`}
-            onClick={() => setFilter("iranian")}
+            className={`filter-btn ${filter === "general" ? "active" : ""}`}
+            onClick={() => setFilter("general")}
           >
-            سرویس‌های داخلی
+            General
           </button>
-
           <button
-            className={`filter-btn ${filter === "international" ? "active" : ""}`}
-            onClick={() => setFilter("international")}
+            className={`filter-btn ${filter === "developer" ? "active" : ""}`}
+            onClick={() => setFilter("developer")}
           >
-            سرویس‌های خارجی
+            Developer
+          </button>
+          <button
+            className={`filter-btn ${filter === "streaming" ? "active" : ""}`}
+            onClick={() => setFilter("streaming")}
+          >
+            Streaming
           </button>
         </div>
 
@@ -122,7 +115,7 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
           <input
             className="control-input"
             type="text"
-            placeholder="جستجوی سرویس ..."
+            placeholder="Search services..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -133,7 +126,7 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
         <input
           className="control-input"
           type="text"
-          placeholder="جستجوی سرویس ..."
+          placeholder="Search services..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -141,38 +134,35 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
 
       <div className="controls-mobile">
         <div className="controls-mobile-filters">
-          <button
-            className={`filter-btn ${filter === "all" ? "active" : ""}`}
-            onClick={() => setFilter("all")}
-          >
-            همه
+          <button className={`filter-btn ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>
+            All
           </button>
-
           <button
-            className={`filter-btn ${filter === "iranian" ? "active" : ""}`}
-            onClick={() => setFilter("iranian")}
+            className={`filter-btn ${filter === "general" ? "active" : ""}`}
+            onClick={() => setFilter("general")}
           >
-            سرویس‌های داخلی
+            General
           </button>
-
           <button
-            className={`filter-btn ${filter === "international" ? "active" : ""}`}
-            onClick={() => setFilter("international")}
+            className={`filter-btn ${filter === "developer" ? "active" : ""}`}
+            onClick={() => setFilter("developer")}
           >
-            سرویس‌های خارجی
+            Developer
+          </button>
+          <button
+            className={`filter-btn ${filter === "streaming" ? "active" : ""}`}
+            onClick={() => setFilter("streaming")}
+          >
+            Streaming
           </button>
         </div>
 
         <div className="controls-mobile-sort">
-          <select
-            className="control-input"
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-          >
-            <option value="latency-fast">سریعترین سرویس</option>
-            <option value="latency-slow">کندترین سرویس</option>
-            <option value="status-up">سرویس‌های در دسترس</option>
-            <option value="status-down">سرویس‌های خارج از دسترس</option>
+          <select className="control-input" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
+            <option value="latency-fast">Lowest latency</option>
+            <option value="latency-slow">Highest latency</option>
+            <option value="status-up">Most available</option>
+            <option value="status-down">Most unavailable</option>
           </select>
         </div>
       </div>

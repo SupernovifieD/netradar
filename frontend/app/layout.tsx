@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "نت رادار",
-  description: "وضعیت دسترسی به سرویس‌های اینترنتی در ایران",
+  title: "NetRadar",
+  description: "Availability and performance dashboard for internet services",
 };
 
 export default function RootLayout({
@@ -11,7 +11,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fa" dir="rtl">
+    <html lang="en" dir="ltr">
       <body>
         <div className="page-wrapper">
           {children}

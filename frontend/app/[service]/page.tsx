@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 
 import ColorGuide from "../components/ColorGuide";
 import Footer from "../components/Footer";
-import PersianStatusCalendar from "../components/PersianStatusCalendar";
+import ServiceStatusCalendar from "../components/ServiceStatusCalendar";
 import ServiceCard from "../components/ServiceCard";
 import TimeSeriesChart from "../components/TimeSeriesChart";
 import {
@@ -58,24 +58,24 @@ function downloadSvgById(svgId: string, filename: string): void {
 }
 
 function formatPercent(value: number): string {
-  return value.toLocaleString("fa-IR", {
+  return value.toLocaleString("en-US", {
     maximumFractionDigits: 2,
     minimumFractionDigits: 0,
   });
 }
 
 function formatLatency(value: number | null): string {
-  if (value === null) return "ناموجود";
-  return value.toLocaleString("fa-IR", {
+  if (value === null) return "N/A";
+  return value.toLocaleString("en-US", {
     maximumFractionDigits: 1,
     minimumFractionDigits: 0,
   });
 }
 
-function toDailyStatusFa(status: DailyServiceSummary["overall_status"]): string {
-  if (status === "UP") return "در دسترس";
-  if (status === "DEGRADED") return "ناپایدار";
-  return "قطع";
+function toDailyStatusLabel(status: DailyServiceSummary["overall_status"]): string {
+  if (status === "UP") return "Up";
+  if (status === "DEGRADED") return "Degraded";
+  return "Down";
 }
 
 export default function ServiceDetailPage() {
@@ -95,7 +95,7 @@ export default function ServiceDetailPage() {
 
   const refreshData = useCallback(async () => {
     if (!serviceDomain) {
-      setErrorMessage("نام سرویس نامعتبر است.");
+      setErrorMessage("Invalid service name.");
       setIsLoading(false);
       return;
     }
@@ -108,7 +108,7 @@ export default function ServiceDetailPage() {
       ]);
 
       if (!meta) {
-        setErrorMessage("این سرویس در فهرست نت رادار وجود ندارد.");
+        setErrorMessage("This service does not exist in the configured list.");
         setServiceMeta(null);
         setRawChecks([]);
         setDailySummaries([]);
@@ -120,7 +120,7 @@ export default function ServiceDetailPage() {
       setDailySummaries(daily);
       setErrorMessage(null);
     } catch {
-      setErrorMessage("دریافت اطلاعات سرویس با خطا مواجه شد.");
+      setErrorMessage("Failed to fetch service data.");
     } finally {
       setIsLoading(false);
     }
@@ -151,27 +151,15 @@ export default function ServiceDetailPage() {
     };
   }, [refreshData]);
 
-  const cardBuckets = useMemo(
-    () => buildServiceBucketsFromChecks(rawChecks, 48),
-    [rawChecks]
-  );
+  const cardBuckets = useMemo(() => buildServiceBucketsFromChecks(rawChecks, 48), [rawChecks]);
 
-  const visibleBuckets = useMemo(
-    () => (isMobile ? cardBuckets.slice(-24) : cardBuckets),
-    [cardBuckets, isMobile]
-  );
+  const visibleBuckets = useMemo(() => (isMobile ? cardBuckets.slice(-24) : cardBuckets), [cardBuckets, isMobile]);
 
   const latestDaily = dailySummaries[0] ?? null;
 
-  const latencySeries = useMemo(
-    () => buildLatencySeries(rawChecks, windowHours),
-    [rawChecks, windowHours]
-  );
+  const latencySeries = useMemo(() => buildLatencySeries(rawChecks, windowHours), [rawChecks, windowHours]);
 
-  const jitterSeries = useMemo(
-    () => buildJitterSeries(latencySeries),
-    [latencySeries]
-  );
+  const jitterSeries = useMemo(() => buildJitterSeries(latencySeries), [latencySeries]);
 
   const handleRawExport = async () => {
     if (!serviceMeta || isExportingRaw) return;
@@ -207,11 +195,11 @@ export default function ServiceDetailPage() {
     <main className="container service-detail-page">
       <div className="box simple-header service-simple-header">
         <Link href="/" className="back-button">
-          ← بازگشت به صفحه اصلی
+          ← Back to home
         </Link>
       </div>
 
-      {isLoading && <div className="box">در حال دریافت اطلاعات سرویس...</div>}
+      {isLoading && <div className="box">Loading service data...</div>}
 
       {errorMessage && <div className="box service-error-box">{errorMessage}</div>}
 
@@ -229,14 +217,14 @@ export default function ServiceDetailPage() {
 
               {latestDaily && (
                 <div className="service-meta-daily-summary">
-                  <div>آخرین وضعیت روزانه: {toDailyStatusFa(latestDaily.overall_status)}</div>
-                  <div>درصد پایداری: {formatPercent(latestDaily.uptime_rate_pct)}٪</div>
-                  <div>میانگین تاخیر: {formatLatency(latestDaily.avg_latency_ms)} ms</div>
+                  <div>Latest daily status: {toDailyStatusLabel(latestDaily.overall_status)}</div>
+                  <div>Uptime rate: {formatPercent(latestDaily.uptime_rate_pct)}%</div>
+                  <div>Average latency: {formatLatency(latestDaily.avg_latency_ms)} ms</div>
                 </div>
               )}
             </div>
 
-            <PersianStatusCalendar summaries={dailySummaries} />
+            <ServiceStatusCalendar summaries={dailySummaries} />
           </div>
 
           <ServiceCard meta={serviceMeta} buckets={visibleBuckets} showMeta={false} />
@@ -245,17 +233,17 @@ export default function ServiceDetailPage() {
             <ColorGuide className="box service-guide-block" />
 
             <div className="box service-download-box">
-              <h3>دریافت داده‌ها</h3>
+              <h3>Download data</h3>
               <p>
-                امکان دانلود داده‌های ۹۰ روز اخیر از هر دو پایگاه داده فراهم است.
-                برای دسترسی به بازه‌های زمانی بلندتر، با مدیر سامانه تماس بگیرید.
+                You can download up to 90 days from both databases. For longer periods, you can
+                do so by querying the local database.
               </p>
               <div className="service-download-actions">
                 <button className="filter-btn" onClick={() => void handleRawExport()} disabled={isExportingRaw}>
-                  {isExportingRaw ? "در حال آماده‌سازی..." : "دانلود داده خام (۹۰ روز)"}
+                  {isExportingRaw ? "Preparing..." : "Download raw data (90 days)"}
                 </button>
                 <button className="filter-btn" onClick={() => void handleDailyExport()} disabled={isExportingDaily}>
-                  {isExportingDaily ? "در حال آماده‌سازی..." : "دانلود خلاصه روزانه (۹۰ روز)"}
+                  {isExportingDaily ? "Preparing..." : "Download daily summary (90 days)"}
                 </button>
               </div>
             </div>
@@ -265,62 +253,54 @@ export default function ServiceDetailPage() {
             <div className="service-graphs-grid">
               <TimeSeriesChart
                 chartId="chart-jitter"
-                title="نمودار جیتر"
+                title="Jitter"
                 points={jitterSeries}
                 unit="ms"
                 stroke="#ffd166"
                 windowHours={windowHours}
-                emptyLabel="برای بازه انتخابی، داده کافی برای محاسبه جیتر وجود ندارد."
+                emptyLabel="Not enough data in this window to compute jitter."
               />
 
               <TimeSeriesChart
                 chartId="chart-latency"
-                title="نمودار تاخیر"
+                title="Latency"
                 points={latencySeries}
                 unit="ms"
                 stroke="#4ea3ff"
                 windowHours={windowHours}
-                emptyLabel="برای بازه انتخابی، داده تاخیر ثبت نشده است."
+                emptyLabel="No latency data available in this window."
               />
             </div>
 
             <div className="service-graph-toolbar">
               <button className="filter-btn service-chart-download" onClick={handleChartDownload}>
-                دانلود نمودارها (SVG)
+                Download charts (SVG)
               </button>
 
               <div className="service-graph-controls">
-                <button
-                  className={`filter-btn ${windowHours === 6 ? "active" : ""}`}
-                  onClick={() => setWindowHours(6)}
-                >
-                  ۶ ساعت
+                <button className={`filter-btn ${windowHours === 6 ? "active" : ""}`} onClick={() => setWindowHours(6)}>
+                  6h
                 </button>
-                <button
-                  className={`filter-btn ${windowHours === 12 ? "active" : ""}`}
-                  onClick={() => setWindowHours(12)}
-                >
-                  ۱۲ ساعت
+                <button className={`filter-btn ${windowHours === 12 ? "active" : ""}`} onClick={() => setWindowHours(12)}>
+                  12h
                 </button>
-                <button
-                  className={`filter-btn ${windowHours === 24 ? "active" : ""}`}
-                  onClick={() => setWindowHours(24)}
-                >
-                  ۲۴ ساعت
+                <button className={`filter-btn ${windowHours === 24 ? "active" : ""}`} onClick={() => setWindowHours(24)}>
+                  24h
                 </button>
               </div>
             </div>
           </section>
 
           <div className="box service-metrics-description">
-            <h3>توضیح شاخص‌ها</h3>
+            <h3>Metrics explained</h3>
             <p>
-              تاخیر (Latency) مدت زمانی است که پاسخ از سرویس به نقطه پایش برسد و به میلی‌ثانیه اندازه‌گیری می‌شود.
-              هرچه این عدد کمتر باشد، تجربه کاربری سریع‌تر خواهد بود.
+              Latency is the time required for a response to reach the monitoring point. It is
+              measured in milliseconds, and lower values usually mean a faster experience.
             </p>
             <p>
-              جیتر (Jitter) میزان نوسان تاخیر بین نمونه‌های پیاپی است.
-              بالا بودن جیتر یعنی کیفیت اتصال یکنواخت نیست و می‌تواند باعث تجربه ناپایدار در تماس، استریم یا بازی آنلاین شود.
+              Jitter is the amount of variation between consecutive latency samples. Higher jitter
+              means the connection quality is less consistent, which can hurt calls, streaming,
+              and real-time applications.
             </p>
           </div>
         </>

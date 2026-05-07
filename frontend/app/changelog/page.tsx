@@ -5,9 +5,9 @@ export default function ChangelogPage() {
   return (
     <div className="simple-page">
 
-      <div className="simple-header">
-        <Link href="/about" className="back-button">
-          ← بازگشت
+      <div className="box simple-header">
+        <Link href="/" className="back-button">
+          ← بازگشت به صفحه اصلی
         </Link>
       </div>
 

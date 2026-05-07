@@ -5,9 +5,9 @@ export default function AboutPage() {
   return (
     <div className="simple-page">
 
-      <div className="simple-header">
+      <div className="box simple-header">
         <Link href="/" className="back-button">
-          ← بازگشت
+          ← بازگشت به صفحه اصلی
         </Link>
       </div>
 

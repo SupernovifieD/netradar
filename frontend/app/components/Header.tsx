@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Clock from "./Clock";
+import ColorGuide from "./ColorGuide";
 
 export default function Header() {
   const [highlightSupport, setHighlightSupport] = useState(false);
@@ -80,13 +81,7 @@ export default function Header() {
           </a>
         </div>
 
-        <div className="box header-guide">
-          راهنمای رنگ‌ها:
-          <div>🟢 سرویس در دسترس</div>
-          <div>🔵 سرویس در دسترس اما بدون داده پینگ</div>
-          <div>🟡 ناپایداری در دسترسی</div>
-          <div>🔴 قطعی سرویس</div>
-        </div>
+        <ColorGuide className="box header-guide" />
       </div>
     </div>
   );

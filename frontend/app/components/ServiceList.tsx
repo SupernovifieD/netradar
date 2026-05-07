@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import ServiceCard from "./ServiceCard";
 import { getFullServiceData } from "@/lib/api";
 import type { FullServiceCardData } from "@/types/service";
@@ -40,12 +41,12 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
     return () => clearInterval(interval);
   }, []);
 
-  function latestLatency(service) {
+  function latestLatency(service: FullServiceCardData): number {
     const last = service.buckets[service.buckets.length - 1];
     return last?.avgLatency ?? Infinity;
   }
 
-  function latestColor(service) {
+  function latestColor(service: FullServiceCardData): string {
     const last = service.buckets[service.buckets.length - 1];
     return last?.color ?? "grey";
   }
@@ -176,12 +177,17 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
         </div>
       </div>
 
-      {filtered.map((s) => (
-        <ServiceCard
-          key={s.meta.domain}
-          meta={s.meta}
-          buckets={isMobile ? s.buckets.slice(-24) : s.buckets}
-        />
+      {filtered.map((serviceData) => (
+        <Link
+          key={serviceData.meta.domain}
+          href={`/${encodeURIComponent(serviceData.meta.domain)}`}
+          className="service-card-link"
+        >
+          <ServiceCard
+            meta={serviceData.meta}
+            buckets={isMobile ? serviceData.buckets.slice(-24) : serviceData.buckets}
+          />
+        </Link>
       ))}
     </>
   );

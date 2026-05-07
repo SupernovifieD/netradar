@@ -12,9 +12,12 @@ export default function ServiceCard({
   };
   buckets: { start: string; end: string; color: string }[];
 }) {
-  function hasConsecutiveReds(b: any[], limit: number) {
+  function hasConsecutiveReds(
+    bucketList: { start: string; end: string; color: string }[],
+    limit: number
+  ): boolean {
     let c = 0;
-    for (const x of b) {
+    for (const x of bucketList) {
       if (x.color === "red") {
         c++;
         if (c >= limit) return true;

@@ -34,9 +34,9 @@ export default function AboutPage() {
           این پروژه مراجعه کنید.
         </p>
 
-        <a href="/changelog" style={{ display: "block", textAlign: "center" }}>
+        <Link href="/changelog" style={{ display: "block", textAlign: "center" }}>
           v0.1.0
-        </a>
+        </Link>
 
       </div>
 

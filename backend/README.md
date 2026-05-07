@@ -121,6 +121,23 @@ Validation failures use:
   - Each summary row includes inline `intervals`.
   - Validation: `day` must match `YYYY-MM-DD`; `limit` must be positive; `offset >= 0`.
 
+### Export endpoints (max 90 days)
+
+- `GET /service/<service>/export/raw?days=<int>`
+  - Returns raw checks for one service in the last `days` (UTC window).
+  - Default: `days=90`.
+  - Hard limit: `days <= 90`.
+  - Response payload: `service`, `days`, `start_utc`, `end_utc`, `data`.
+  - If `days > 90`, API returns an error asking user to contact the administrator.
+
+- `GET /service/<service>/export/daily?days=<int>`
+  - Returns daily summary rows for one service in the last `days` closed UTC days.
+  - Default: `days=90`.
+  - Hard limit: `days <= 90`.
+  - Response payload: `service`, `days`, `start_day_utc`, `end_day_utc`, `data`.
+  - Rows include inline `intervals`.
+  - If `days > 90`, API returns an error asking user to contact the administrator.
+
 ### Monitor control and health
 
 - `POST /monitor/start`

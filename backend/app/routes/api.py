@@ -14,6 +14,7 @@ from app.services.monitor import monitor
 from config import Config
 
 bp = Blueprint("api", __name__, url_prefix="/api")
+MAX_EXPORT_DAYS = 90
 
 
 def success_response(**payload: Any):
@@ -42,6 +43,21 @@ def with_intervals(summaries: list[dict[str, Any]]) -> list[dict[str, Any]]:
         intervals = DailyServiceHistory.get_intervals(summary["service"], summary["day_utc"])
         enriched.append({**summary, "intervals": intervals})
     return enriched
+
+
+def parse_export_days(raw_days: int | None) -> tuple[int | None, tuple[Any, int] | None]:
+    """Validate export ``days`` query value with a strict upper bound."""
+    days = raw_days if raw_days is not None else MAX_EXPORT_DAYS
+    if days <= 0:
+        return None, error_response("days must be a positive integer")
+    if days > MAX_EXPORT_DAYS:
+        return (
+            None,
+            error_response(
+                f"days cannot be greater than {MAX_EXPORT_DAYS}; contact administrator for longer exports"
+            ),
+        )
+    return days, None
 
 
 @bp.route("/status", methods=["GET"])
@@ -91,6 +107,57 @@ def get_service_daily_history(service: str):
         before_day=before_day,
     )
     return success_response(service=service, data=with_intervals(summaries))
+
+
+@bp.route("/service/<service>/export/raw", methods=["GET"])
+def export_service_raw(service: str):
+    """Return service-level raw checks for the last N days (max 90)."""
+    days, error = parse_export_days(request.args.get("days", MAX_EXPORT_DAYS, type=int))
+    if error:
+        return error
+
+    end_utc = datetime.now(timezone.utc)
+    start_utc = end_utc - timedelta(days=days)
+    start_value = start_utc.strftime("%Y-%m-%d %H:%M:%S")
+    end_value = end_utc.strftime("%Y-%m-%d %H:%M:%S")
+
+    rows = CheckResult.get_by_service_between(
+        service=service,
+        start_datetime=start_value,
+        end_datetime=end_value,
+    )
+    return success_response(
+        service=service,
+        days=days,
+        start_utc=start_value,
+        end_utc=end_value,
+        data=rows,
+    )
+
+
+@bp.route("/service/<service>/export/daily", methods=["GET"])
+def export_service_daily(service: str):
+    """Return service-level daily summaries for the last N closed UTC days (max 90)."""
+    days, error = parse_export_days(request.args.get("days", MAX_EXPORT_DAYS, type=int))
+    if error:
+        return error
+
+    today_utc = datetime.now(timezone.utc).date()
+    start_day_utc = (today_utc - timedelta(days=days)).isoformat()
+    end_day_utc = today_utc.isoformat()
+
+    summaries = DailyServiceHistory.get_service_summaries_between(
+        service=service,
+        start_day_utc=start_day_utc,
+        end_day_utc=end_day_utc,
+    )
+    return success_response(
+        service=service,
+        days=days,
+        start_day_utc=start_day_utc,
+        end_day_utc=end_day_utc,
+        data=with_intervals(summaries),
+    )
 
 
 @bp.route("/daily/services", methods=["GET"])

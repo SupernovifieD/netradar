@@ -92,6 +92,35 @@ class CheckResult:
         return [dict(row) for row in rows]
 
     @staticmethod
+    def get_by_service_between(
+        service: str,
+        start_datetime: str,
+        end_datetime: str,
+    ) -> list[dict[str, Any]]:
+        """Return one service rows in ``[start_datetime, end_datetime)`` window.
+
+        Args:
+            service: Service domain key.
+            start_datetime: Datetime string in ``YYYY-MM-DD HH:MM:SS`` format.
+            end_datetime: Datetime string in ``YYYY-MM-DD HH:MM:SS`` format.
+        """
+        with get_connection(Config.DATABASE_PATH, with_row_factory=True) as connection:
+            cursor = connection.cursor()
+            cursor.execute(
+                """
+                SELECT *
+                FROM checks
+                WHERE service = ?
+                  AND (date || ' ' || time) >= ?
+                  AND (date || ' ' || time) < ?
+                ORDER BY date DESC, time DESC
+                """,
+                (service, start_datetime, end_datetime),
+            )
+            rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+
+    @staticmethod
     def get_services_status() -> list[dict[str, Any]]:
         """Return one latest row per service."""
         with get_connection(Config.DATABASE_PATH, with_row_factory=True) as connection:

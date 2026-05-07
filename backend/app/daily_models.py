@@ -161,6 +161,30 @@ class DailyServiceHistory:
         return [dict(row) for row in rows]
 
     @staticmethod
+    def get_service_summaries_between(
+        service: str,
+        *,
+        start_day_utc: str,
+        end_day_utc: str,
+    ) -> list[DailySummaryRow]:
+        """Return daily summaries for one service in ``[start_day_utc, end_day_utc)``."""
+        with get_daily_connection(Config.DAILY_DATABASE_PATH, with_row_factory=True) as connection:
+            cursor = connection.cursor()
+            cursor.execute(
+                """
+                SELECT *
+                FROM daily_service_stats
+                WHERE service = ?
+                  AND day_utc >= ?
+                  AND day_utc < ?
+                ORDER BY day_utc DESC
+                """,
+                (service, start_day_utc, end_day_utc),
+            )
+            rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+
+    @staticmethod
     def get_day_summaries(day_utc: str, *, limit: int, offset: int) -> list[DailySummaryRow]:
         """Return daily summaries for all services on a specific day."""
         with get_daily_connection(Config.DAILY_DATABASE_PATH, with_row_factory=True) as connection:

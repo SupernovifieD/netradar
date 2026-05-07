@@ -164,3 +164,40 @@ python run.py
 ```
 
 API base URL: `http://localhost:5001/api`
+
+## Backend TUI
+
+The backend now includes a Textual TUI with two screens:
+
+1. **Main dashboard**:
+   - Lists all services from `services.json`.
+   - Shows latest status, DNS, TCP, latency, packet loss, and last-seen timestamp.
+   - Auto-refreshes every 15 minutes.
+   - Supports search, scroll, add service, and delete service actions.
+2. **Service detail**:
+   - Opens from the selected row on the dashboard (`Enter`).
+   - Shows service metadata + latest check metrics.
+   - Shows 24h status buckets (same color logic as frontend).
+   - Shows latency and jitter graphs for the last 6 hours.
+
+### Run the TUI
+
+From `backend/`:
+
+```bash
+python tui.py
+```
+
+### Main key bindings
+
+- `Enter`: open selected service detail
+- `/`: focus search input
+- `r`: refresh now
+- `a`: add service to `services.json`
+- `d`: delete selected service from `services.json` (requires typed confirmation)
+- `q`: quit
+
+### Detail key bindings
+
+- `b` or `Esc`: back to dashboard
+- `r`: refresh now

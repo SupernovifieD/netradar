@@ -7,6 +7,7 @@ initialization, and API routes.
 from flask import Flask
 from flask_cors import CORS
 
+from app.daily_db import init_daily_db
 from app.db import init_db
 
 
@@ -27,6 +28,7 @@ def create_app(config_class: str = "config.Config") -> Flask:
 
     # Ensure required SQLite schema/indexes are available before requests.
     init_db(app.config["DATABASE_PATH"])
+    init_daily_db(app.config["DAILY_DATABASE_PATH"])
 
     from app.routes import api
 

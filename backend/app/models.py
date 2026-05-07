@@ -127,3 +127,25 @@ class CheckResult:
             )
             rows = cursor.fetchall()
         return [dict(row) for row in rows]
+
+    @staticmethod
+    def get_between(start_utc: str, end_utc: str) -> list[dict[str, Any]]:
+        """Return raw checks in ``[start_utc, end_utc)`` datetime window.
+
+        Args:
+            start_utc: UTC datetime string in ``YYYY-MM-DD HH:MM:SS`` format.
+            end_utc: UTC datetime string in ``YYYY-MM-DD HH:MM:SS`` format.
+        """
+        with get_connection(Config.DATABASE_PATH, with_row_factory=True) as connection:
+            cursor = connection.cursor()
+            cursor.execute(
+                """
+                SELECT *
+                FROM checks
+                WHERE (date || ' ' || time) >= ? AND (date || ' ' || time) < ?
+                ORDER BY service ASC, date ASC, time ASC
+                """,
+                (start_utc, end_utc),
+            )
+            rows = cursor.fetchall()
+        return [dict(row) for row in rows]

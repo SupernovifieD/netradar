@@ -13,14 +13,16 @@ def print_startup_banner() -> None:
     """Print API URL and available endpoints."""
     print("\nFlask API running on http://localhost:5001")
     print("API endpoints:")
-    print("  GET  /api/status          - Current status of all services")
-    print("  GET  /api/history         - Recent check history")
-    print("  GET  /api/history/24h     - 24h check history")
-    print("  GET  /api/services        - Services metadata")
-    print("  GET  /api/service/<name>  - History for specific service")
-    print("  POST /api/monitor/start   - Start monitoring")
-    print("  POST /api/monitor/stop    - Stop monitoring")
-    print("  GET  /api/health          - Health check\n")
+    print("  GET  /api/status                   - Current status of all services")
+    print("  GET  /api/history                  - Recent check history")
+    print("  GET  /api/history/24h              - 24h check history")
+    print("  GET  /api/services                 - Services metadata")
+    print("  GET  /api/service/<name>           - History for specific service")
+    print("  GET  /api/service/<name>/daily     - Daily history for a specific service")
+    print("  GET  /api/daily/services           - Daily summaries for all services")
+    print("  POST /api/monitor/start            - Start monitoring")
+    print("  POST /api/monitor/stop             - Stop monitoring")
+    print("  GET  /api/health                   - Health check\n")
 
 
 def main() -> None:

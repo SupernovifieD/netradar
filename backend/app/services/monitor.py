@@ -10,6 +10,7 @@ from datetime import datetime
 
 from app.models import CheckResult
 from app.services.checker import check_service
+from app.services.daily_aggregator import DailyAggregator
 from config import Config
 
 
@@ -20,6 +21,7 @@ class ServiceMonitor:
         """Initialize monitor state."""
         self.running: bool = False
         self.thread: threading.Thread | None = None
+        self.daily_aggregator = DailyAggregator()
 
     def load_services(self) -> list[str]:
         """Load monitored domain names from ``services.json``."""
@@ -57,6 +59,11 @@ class ServiceMonitor:
                     CheckResult.save(*row)
                 except Exception as row_exc:
                     print(f"Error persisting row for {row[0]}: {row_exc}")
+
+        try:
+            self.daily_aggregator.run()
+        except Exception as exc:
+            print(f"Error aggregating daily history: {exc}")
 
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Cycle completed\n")
 

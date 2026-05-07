@@ -63,14 +63,77 @@ Runtime SQLite settings (both DBs):
 - `busy_timeout=30000` to wait for transient locks before failing.
 - Batched insert writes per monitor cycle to reduce lock churn.
 
-## API additions
+## API endpoints
 
-- `GET /api/service/<service>/daily?limit=<int>&before_day=<YYYY-MM-DD>`
-  - Newest-first daily summaries for one service.
-  - Includes inline interval details (`DOWN` and `NO_DATA`).
-- `GET /api/daily/services?day=<YYYY-MM-DD>&limit=<int>&offset=<int>`
-  - Daily summaries for all services on one UTC day.
-  - If `day` is omitted, latest aggregated closed day is returned.
+Base URL: `http://localhost:5001/api`
+
+All success responses use this shape:
+
+```json
+{ "success": true, ...payload }
+```
+
+Validation failures use:
+
+```json
+{ "success": false, "error": "..." }
+```
+
+### Raw check endpoints
+
+- `GET /status`
+  - Returns latest raw check row per service.
+  - Response payload: `data` (array of raw check rows).
+
+- `GET /history?limit=<int>`
+  - Returns newest raw checks across all services.
+  - Default `limit`: `100`.
+  - Response payload: `data` (array of raw check rows).
+
+- `GET /history/24h`
+  - Returns raw checks from the last 24 hours.
+  - Response payload: `data` (array of raw check rows).
+
+- `GET /service/<service>?limit=<int>`
+  - Returns newest raw checks for a specific service.
+  - Default `limit`: `50`.
+  - Response payload: `service`, `data`.
+
+- `GET /services`
+  - Returns static service metadata loaded from `services.json`.
+  - Response payload: `data` (service metadata array).
+
+### Daily aggregate endpoints
+
+- `GET /service/<service>/daily?limit=<int>&before_day=<YYYY-MM-DD>`
+  - Returns newest-first daily summaries for one service.
+  - Default `limit`: `30`.
+  - `before_day` is optional and filters results to days `< before_day`.
+  - Response payload: `service`, `data`.
+  - Each summary row includes inline `intervals` (`DOWN` and `NO_DATA` windows).
+  - Validation: `before_day` must match `YYYY-MM-DD`; `limit` must be positive.
+
+- `GET /daily/services?day=<YYYY-MM-DD>&limit=<int>&offset=<int>`
+  - Returns daily summaries for all services for one UTC day.
+  - If `day` is omitted, latest aggregated closed day is used.
+  - Defaults: `limit=100`, `offset=0`.
+  - Response payload: `day`, `data`.
+  - Each summary row includes inline `intervals`.
+  - Validation: `day` must match `YYYY-MM-DD`; `limit` must be positive; `offset >= 0`.
+
+### Monitor control and health
+
+- `POST /monitor/start`
+  - Starts the in-process background monitor thread.
+  - Response payload: `message`.
+
+- `POST /monitor/stop`
+  - Stops the in-process background monitor thread.
+  - Response payload: `message`.
+
+- `GET /health`
+  - Basic liveness endpoint.
+  - Response payload: `status` (`healthy`).
 
 ## Running locally
 

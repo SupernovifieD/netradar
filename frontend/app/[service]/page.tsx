@@ -239,7 +239,7 @@ export default function ServiceDetailPage() {
             <PersianStatusCalendar summaries={dailySummaries} />
           </div>
 
-          <ServiceCard meta={serviceMeta} buckets={visibleBuckets} />
+          <ServiceCard meta={serviceMeta} buckets={visibleBuckets} showMeta={false} />
 
           <div className="service-info-row">
             <ColorGuide className="box service-guide-block" />

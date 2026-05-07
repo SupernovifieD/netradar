@@ -86,7 +86,7 @@ export default function ServiceDetailPage() {
   const [serviceMeta, setServiceMeta] = useState<ServiceMeta | null>(null);
   const [rawChecks, setRawChecks] = useState<ServiceCheck[]>([]);
   const [dailySummaries, setDailySummaries] = useState<DailyServiceSummary[]>([]);
-  const [windowHours, setWindowHours] = useState<6 | 12 | 24>(24);
+  const [windowHours, setWindowHours] = useState<6 | 12 | 24>(6);
   const [isMobile, setIsMobile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

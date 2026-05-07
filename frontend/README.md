@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NetRadar Frontend
 
-## Getting Started
+This is the Next.js frontend for NetRadar.
 
-First, run the development server:
+It renders:
+- Home dashboard (`/`) with service cards and status timelines.
+- Service detail page (`/:service-domain`) with daily calendar, detailed buckets, and latency/jitter charts.
+- Static pages (`/about`, `/faq`, `/changelog`).
+
+## Tech Stack
+
+- Next.js (App Router)
+- React + TypeScript
+- Plain CSS (`app/globals.css`)
+
+## Run Locally
+
+From `frontend/`:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Frontend runs on `http://localhost:3001`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Important: backend must be running at `http://localhost:5001` because API calls are hardcoded in `lib/api.ts` (`API_BASE`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Directory Guide
 
-## Learn More
+- `app/page.tsx`: home page shell.
+- `app/[service]/page.tsx`: service detail page.
+- `app/components/`: UI building blocks.
+- `lib/api.ts`: frontend data fetching + bucketing + core color logic.
+- `types/service.ts`: TypeScript contracts for API data.
+- `app/globals.css`: all global styles and color tokens.
 
-To learn more about Next.js, take a look at the following resources:
+## Data Flow (High-Level)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. `lib/api.ts` fetches:
+   - `/api/services` for metadata
+   - `/api/history/24h` or `/api/service/:name` for raw checks
+   - `/api/service/:name/daily` for daily aggregate summaries
+2. Raw checks are grouped into 30-minute buckets in `lib/api.ts`.
+3. Each bucket gets a color token from `determineColor(...)`.
+4. Components render color tokens as timeline blocks, legends, and tooltips.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Coloring Logic
 
-## Deploy on Vercel
+### 1) Bucket color classification (core logic)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Location: `frontend/lib/api.ts` → `determineColor(upPercent, avgLatency)`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Rules (exact current behavior):
+
+- `green`: `upPercent >= 80` and `avgLatency < 40`
+- `darkgreen`: `20 <= upPercent < 80` and `avgLatency < 40`
+- `orange`: `upPercent >= 80` and `avgLatency >= 40`
+- `blue`: `upPercent >= 80` and no latency data (`avgLatency === null`)
+- `darkblue`: `20 <= upPercent` and no latency data (`avgLatency === null`)
+- `red`: `upPercent < 20`
+- `grey`: fallback / no data
+
+These color keys are the canonical status tokens used by timeline rendering.
+
+### 2) Bucket color-to-hex + text mapping
+
+Location: `frontend/app/components/StatusBar.tsx`
+
+- `colorToHex(...)` maps tokens (`green`, `darkgreen`, etc.) to hex values used in bars.
+- `translateStatus(...)` maps tokens to tooltip labels.
+
+If you add or rename a token in `determineColor`, update both functions.
+
+### 3) Color guide text block
+
+Location: `frontend/app/components/ColorGuide.tsx`
+
+This is the lightweight user-facing legend shown in header/service pages. Keep it aligned with the status model used in `determineColor` and `StatusBar`.
+
+### 4) Daily calendar colors (service page)
+
+Locations:
+- Logic: `frontend/app/components/ServiceStatusCalendar.tsx`
+- CSS: `frontend/app/globals.css`
+
+Mapping uses backend daily aggregate status (`overall_status`):
+
+- `UP` → `.service-calendar-cell--up`
+- `DEGRADED` → `.service-calendar-cell--degraded`
+- `DOWN` → `.service-calendar-cell--down`
+- missing day data → `.service-calendar-cell--nodata`
+
+### 5) Chart line colors
+
+Location: `frontend/app/[service]/page.tsx`
+
+- Jitter line `stroke="#ffd166"`
+- Latency line `stroke="#4ea3ff"`
+
+## How to Modify Colors Safely
+
+If you want to tune status behavior, change files in this order:
+
+1. Update threshold rules in `lib/api.ts` (`determineColor`).
+2. Update token rendering in `StatusBar.tsx` (`colorToHex`, `translateStatus`).
+3. Update `ColorGuide.tsx` wording if the meaning changed.
+4. If daily meanings changed, update `ServiceStatusCalendar.tsx` and related calendar CSS classes.
+5. Run checks:
+
+```bash
+npm run lint
+npm run build
+```
+
+## Other Useful Customization Points
+
+- Bucket width/time span:
+  - `HALF_HOUR_MS` and bucket generation in `lib/api.ts`.
+- Desktop vs mobile bucket count on cards:
+  - Home: `ServiceList.tsx` (mobile slices last 24 buckets)
+  - Service page: `[service]/page.tsx` (same behavior)
+- Refresh intervals:
+  - Home list refresh: `ServiceList.tsx` (currently 60s)
+  - Service page refresh: `[service]/page.tsx` (currently 120s)
+
+## Build & Quality
+
+```bash
+npm run lint
+npm run build
+```
+
+Use these before committing UI or color-rule changes.

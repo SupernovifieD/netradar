@@ -77,10 +77,13 @@ If backend is not running, frontend pages will load but data requests will fail.
   - `backend/netradar.db` (raw checks)
   - `backend/netradar_daily.db` (daily aggregates)
 
-## Need More Backend Details?
+## Need More Details?
 
 For backend architecture, full endpoint docs, aggregation behavior, and operational details, see:
 - [backend/README.md](backend/README.md)
+
+For frontend coloring logic and notes, see:
+- [frontend/README.md](frontend/README.md)
 
 ## License
 

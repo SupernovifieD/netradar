@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
+from time import monotonic
 
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, VerticalScroll
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen, Screen
+from textual.timer import Timer
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
 from app.services.monitor import monitor
@@ -50,18 +52,19 @@ class AddServiceModal(ModalScreen[ServiceCatalogItem | None]):
     BINDINGS = [Binding("escape", "cancel", "Cancel")]
 
     def compose(self) -> ComposeResult:
-        yield Static("Add Service", classes="dialog-title")
-        yield Static("Fill all fields exactly as they should appear in services.json")
-        yield Input(placeholder="Domain (e.g. example.com)", id="domain")
-        yield Input(placeholder="Display name", id="name")
-        yield Input(placeholder="Group (e.g. International Service)", id="group")
-        yield Input(placeholder="Category (e.g. General Services)", id="category")
+        with Vertical(id="add-service-panel"):
+            yield Static("Add Service", classes="dialog-title")
+            yield Static("Fill all fields exactly as they should appear in services.json")
+            yield Input(placeholder="Domain (e.g. example.com)", id="domain")
+            yield Input(placeholder="Display name", id="name")
+            yield Input(placeholder="Group (e.g. International Service)", id="group")
+            yield Input(placeholder="Category (e.g. General Services)", id="category")
 
-        with Horizontal(classes="dialog-actions"):
-            yield Button("Cancel", id="cancel")
-            yield Button("Save", id="save")
+            with Horizontal(classes="dialog-actions"):
+                yield Button("Cancel", id="cancel")
+                yield Button("Save", id="save")
 
-        yield Static("", id="form-error", classes="dialog-error")
+            yield Static("", id="form-error", classes="dialog-error")
 
     def action_cancel(self) -> None:
         self.dismiss(None)
@@ -136,15 +139,20 @@ class DeleteServiceModal(ModalScreen[bool]):
 class ServiceDetailScreen(Screen):
     """Detail screen for one service with buckets and 6h graphs."""
 
+    AUTO_REFRESH_SECONDS = 60
+
     BINDINGS = [
         Binding("b", "back", "Back"),
         Binding("escape", "back", "Back"),
+        Binding("q", "quit", "Quit"),
         Binding("r", "refresh", "Refresh"),
     ]
 
     def __init__(self, service: ServiceCatalogItem) -> None:
         super().__init__()
         self._service = service
+        self._refresh_timer: Timer | None = None
+        self._last_refresh_monotonic: float | None = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -154,13 +162,18 @@ class ServiceDetailScreen(Screen):
             yield Static("", id="detail-buckets")
             yield Static("", id="detail-latency")
             yield Static("", id="detail-jitter")
-            yield Static("Press b or Esc to go back. Press r to refresh.", classes="detail-hint")
+            yield Static("Press b or Esc to go back. Press q to quit. Press r to refresh.", classes="detail-hint")
 
         yield Footer()
 
     def on_mount(self) -> None:
         self._refresh()
-        self.set_interval(60, self._refresh)
+        self._refresh_timer = self.set_interval(self.AUTO_REFRESH_SECONDS, self._auto_refresh_tick)
+
+    def on_unmount(self) -> None:
+        if self._refresh_timer is not None:
+            self._refresh_timer.stop()
+            self._refresh_timer = None
 
     def action_back(self) -> None:
         self.app.pop_screen()
@@ -168,7 +181,19 @@ class ServiceDetailScreen(Screen):
     def action_refresh(self) -> None:
         self._refresh()
 
+    def action_quit(self) -> None:
+        self.app.exit()
+
+    def _auto_refresh_tick(self) -> None:
+        """Refresh on timer only after the full interval has elapsed."""
+        if self._last_refresh_monotonic is not None:
+            elapsed = monotonic() - self._last_refresh_monotonic
+            if elapsed < float(self.AUTO_REFRESH_SECONDS):
+                return
+        self._refresh()
+
     def _refresh(self) -> None:
+        self._last_refresh_monotonic = monotonic()
         rows = fetch_recent_checks(self._service.domain, limit=10_000)
         runtime_rows = monitor.get_runtime_snapshot().get("services", [])
         runtime_by_domain = {
@@ -225,7 +250,7 @@ class ServiceDetailScreen(Screen):
         buckets = build_half_hour_buckets(rows, bucket_count=12)
         bucket_width = self._content_width(buckets_widget)
         bucket_text = Text()
-        bucket_text.append("6h Buckets (30-minute slots, newest on the right)\n", style="bold")
+        bucket_text.append("6h window (30-minute slots, newest on the right)\n", style="bold")
         bucket_text.append_text(
             build_bucket_bar(
                 buckets,
@@ -234,7 +259,6 @@ class ServiceDetailScreen(Screen):
             )
         )
         bucket_text.append("\n")
-        bucket_text.append("Time Markers (oldest → newest)\n", style="#9f9f9f")
         bucket_text.append_text(
             build_bucket_markers(
                 buckets,

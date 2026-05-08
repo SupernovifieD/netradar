@@ -61,10 +61,24 @@ class NetRadarTUI(App[None]):
         align: center middle;
     }
 
-    AddServiceModal > * ,
+    #add-service-panel {
+        width: 56;
+        max-width: 60;
+        height: auto;
+        background: #000000;
+        border: solid #2a2a2a;
+        padding: 1 2;
+    }
+
     DeleteServiceModal > * {
         width: 70;
         max-width: 80;
+    }
+
+    #add-service-panel Input,
+    #add-service-panel Button,
+    #add-service-panel Static {
+        background: #000000;
     }
 
     .dialog-title {
@@ -74,6 +88,8 @@ class NetRadarTUI(App[None]):
 
     .dialog-actions {
         height: auto;
+        width: 100%;
+        align: center middle;
         margin-top: 1;
         margin-bottom: 1;
     }

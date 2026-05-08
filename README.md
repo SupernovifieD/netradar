@@ -70,6 +70,45 @@ You must run backend and frontend in **separate terminals** at the same time:
 
 If backend is not running, frontend pages will load but data requests will fail.
 
+## Optional: Use the Backend TUI (Terminal UI)
+
+If you prefer a terminal dashboard, NetRadar also includes a TUI in `backend/`.
+
+### When to use it
+
+- Use it to monitor services directly in terminal.
+- Use it to quickly search services.
+- Use it to add/remove services in `services.json` with built-in prompts.
+
+### Important
+
+- The TUI reads data from the backend database.
+- To keep data updating continuously, keep `python run.py` running in another terminal.
+- If you want backend + TUI together, use **2 terminals**:
+  - Terminal 1: `python run.py`
+  - Terminal 2: `python tui.py`
+
+### How to run the TUI
+
+From `backend/` (after installing backend requirements):
+
+```bash
+cd backend
+source .venv/bin/activate
+python tui.py
+```
+
+### TUI controls (quick guide)
+
+- `Enter`: open selected service details
+- `/`: search by service name/domain
+- `Esc`: clear search and return to table
+- `r`: refresh now
+- `a`: add service
+- `d`: delete selected service (with confirmation)
+- `b` or `Esc` (detail screen): go back
+- `q`: quit
+
 ## Configuration Notes
 
 - Service list is defined in `services.json` (root).

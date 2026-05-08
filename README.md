@@ -17,11 +17,13 @@ It has two parts:
 
 ## How It Works
 
-1. The backend monitor runs continuously (every few seconds).
-2. For each service, it performs DNS, TCP/HTTP(S), and ping checks.
-3. Raw check results are stored in `backend/netradar.db`.
-4. Daily aggregates are generated into `backend/netradar_daily.db`.
-5. The frontend calls backend APIs and renders the dashboard.
+1. The backend monitor runs continuously on a schedule-aware loop.
+2. Each service is probed when due (default every 60 seconds) with jitter and capped backoff.
+3. For each due service, NetRadar performs DNS, TCP/HTTP(S), and ping checks.
+4. Probe outcomes include reason metadata such as `OK`, `FORBIDDEN`, `RATE_LIMITED`, or failure reasons.
+5. Raw check results are stored in `backend/netradar.db`.
+6. Daily aggregates are generated into `backend/netradar_daily.db`.
+7. The frontend calls backend APIs and renders the dashboard.
 
 ## Quick Start
 
@@ -153,6 +155,8 @@ Monitor control commands are API-mode only:
 
 ```bash
 python cli.py --mode api monitor status
+python cli.py --mode api monitor policy
+python cli.py --mode api monitor runtime
 python cli.py --mode api monitor start
 python cli.py --mode api monitor stop
 ```
@@ -166,6 +170,11 @@ python cli.py --mode api monitor stop
 ## Configuration Notes
 
 - Service list is defined in `services.json` (root).
+- Optional per-service policy can be added via `monitoring`:
+  - `enabled` (default `true`)
+  - `interval_seconds` (default `60`)
+  - `jitter_seconds` (default `6`)
+  - `max_backoff_seconds` (default `600`)
 - Backend default DB files:
   - `backend/netradar.db` (raw checks)
   - `backend/netradar_daily.db` (daily aggregates)

@@ -5,7 +5,7 @@ This directory contains the Flask API and background monitor that powers NetRada
 ## High-level architecture
 
 1. `run.py` boots Flask and starts the background monitor thread.
-2. `app/services/monitor.py` runs check cycles on a fixed interval.
+2. `app/services/monitor.py` runs schedule-aware due checks with jitter and capped backoff.
 3. `app/services/checker.py` performs DNS, HTTP(S), and ping probes for each domain.
 4. `app/models.py` writes/reads probe results from `netradar.db`.
 5. `app/services/daily_aggregator.py` builds closed-day summaries in `netradar_daily.db`.
@@ -23,6 +23,7 @@ This directory contains the Flask API and background monitor that powers NetRada
 - `app/services/checker.py`: probe functions.
 - `app/services/daily_aggregator.py`: closed-day aggregation logic.
 - `app/services/monitor.py`: scheduler/worker loop.
+- `app/services/monitoring_policy.py`: per-service schedule policy parsing.
 
 ## Database schema
 
@@ -36,6 +37,8 @@ The backend stores raw checks in `netradar.db`:
   - `dns` (TEXT)
   - `tcp` (TEXT)
   - `status` (TEXT)
+  - `probe_reason` (TEXT, nullable)
+  - `http_status_code` (INTEGER, nullable)
   - `date` (TEXT, `YYYY-MM-DD`)
   - `time` (TEXT, `HH:MM:SS`)
 
@@ -63,6 +66,36 @@ Runtime SQLite settings (both DBs):
 - `busy_timeout=30000` to wait for transient locks before failing.
 - Batched insert writes per monitor cycle to reduce lock churn.
 
+Monitor runtime defaults:
+
+- global scheduler tick: `CHECK_INTERVAL = 60s`
+- per-service default probe interval: `60s`
+- default jitter: `6s`
+- default max backoff cap: `600s`
+- ping sample count: `4`
+
+Optional per-service schedule config in `services.json`:
+
+```json
+{
+  "domain": "example.com",
+  "name": "Example",
+  "group": "International Service",
+  "category": "General Services",
+  "monitoring": {
+    "enabled": true,
+    "interval_seconds": 60,
+    "jitter_seconds": 6,
+    "max_backoff_seconds": 600
+  }
+}
+```
+
+Raw status model remains `UP`/`DOWN`; richer classification is surfaced through:
+
+- `probe_reason`: `OK`, `FORBIDDEN`, `RATE_LIMITED`, `DNS_FAIL`, `TCP_FAIL`, ...
+- `http_status_code`: last HTTP response code when available.
+
 ## API endpoints
 
 Base URL: `http://localhost:5001/api`
@@ -83,16 +116,16 @@ Validation failures use:
 
 - `GET /status`
   - Returns latest raw check row per service.
-  - Response payload: `data` (array of raw check rows).
+  - Response payload: `data` (array of raw check rows, including optional `probe_reason` and `http_status_code`).
 
 - `GET /history?limit=<int>`
   - Returns newest raw checks across all services.
   - Default `limit`: `100`.
-  - Response payload: `data` (array of raw check rows).
+  - Response payload: `data` (array of raw check rows with probe reason/code when present).
 
 - `GET /history/24h`
   - Returns raw checks from the last 24 hours.
-  - Response payload: `data` (array of raw check rows).
+  - Response payload: `data` (array of raw check rows with probe reason/code when present).
 
 - `GET /service/<service>?limit=<int>`
   - Returns newest raw checks for a specific service.
@@ -156,6 +189,14 @@ Validation failures use:
   - Returns monitor runtime state for this backend process.
   - Response payload: `running`, `thread_alive`.
 
+- `GET /monitor/policy`
+  - Returns effective monitor defaults + per-service schedule config.
+  - Response payload: `defaults`, `services`.
+
+- `GET /monitor/runtime`
+  - Returns per-service in-memory scheduler state.
+  - Response payload: `services` including due time, backoff, and last probe reason.
+
 - `GET /health`
   - Basic liveness endpoint.
   - Response payload: `status` (`healthy`).
@@ -179,7 +220,7 @@ The backend now includes a Textual TUI with two screens:
 
 1. **Main dashboard**:
    - Lists all services from `services.json`.
-   - Shows latest status, DNS, TCP, latency, packet loss, and last-seen timestamp.
+   - Shows latest status, probe reason, HTTP code, DNS/TCP, latency, packet loss, backoff, and next due time.
    - Auto-refreshes every 15 minutes.
    - Supports search, scroll, add service, and delete service actions.
 2. **Service detail**:
@@ -242,7 +283,7 @@ python cli.py --help
 - `daily services [--day YYYY-MM-DD] [--limit N] [--offset N]`
 - `export raw <domain> [--days N<=90] [--out PATH]`
 - `export daily <domain> [--days N<=90] [--out PATH]`
-- `monitor start|stop|status` (API mode only)
+- `monitor start|stop|status|policy|runtime` (API mode only)
 - `probe service <domain>` (local mode only)
 - `ops snapshot <domain> [--history-limit N] [--daily-limit N]`
 - `ops gate <domain> [--days N] [--min-uptime PCT] [--max-p95-latency MS]`
@@ -299,4 +340,8 @@ python cli.py --json ops gate google.com --days 30 --min-uptime 99 --max-p95-lat
 
 # Remote monitor status
 python cli.py --mode api --json monitor status
+
+# Remote monitor policy/runtime introspection
+python cli.py --mode api --json monitor policy
+python cli.py --mode api --json monitor runtime
 ```

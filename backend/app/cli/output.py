@@ -117,12 +117,35 @@ def render_human(command: str, data: Any, meta: dict[str, Any]) -> str:
 
     if command == "status.current":
         rows = data if isinstance(data, list) else []
-        columns = ["service", "status", "dns", "tcp", "latency", "packet_loss", "date", "time"]
+        columns = [
+            "service",
+            "status",
+            "probe_reason",
+            "http_status_code",
+            "dns",
+            "tcp",
+            "latency",
+            "packet_loss",
+            "date",
+            "time",
+        ]
         return f"Current status rows: {len(rows)}\n{render_table(rows, columns)}"
 
     if command in {"history.recent", "history.24h", "history.service"}:
         rows = data if isinstance(data, list) else []
-        columns = ["id", "service", "status", "dns", "tcp", "latency", "packet_loss", "date", "time"]
+        columns = [
+            "id",
+            "service",
+            "status",
+            "probe_reason",
+            "http_status_code",
+            "dns",
+            "tcp",
+            "latency",
+            "packet_loss",
+            "date",
+            "time",
+        ]
         return f"History rows: {len(rows)}\n{render_table(rows, columns)}"
 
     if command == "daily.service":
@@ -144,7 +167,13 @@ def render_human(command: str, data: Any, meta: dict[str, Any]) -> str:
             line += f"\nSaved: {output_meta.get('path')}"
         return line
 
-    if command in {"monitor.start", "monitor.stop", "monitor.status"} and isinstance(data, dict):
+    if command in {
+        "monitor.start",
+        "monitor.stop",
+        "monitor.status",
+        "monitor.policy",
+        "monitor.runtime",
+    } and isinstance(data, dict):
         return dumps_pretty_json(data)
 
     if command == "probe.service":

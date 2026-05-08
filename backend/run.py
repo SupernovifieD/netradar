@@ -25,6 +25,8 @@ def print_startup_banner() -> None:
     print("  POST /api/monitor/start                - Start monitoring")
     print("  POST /api/monitor/stop                 - Stop monitoring")
     print("  GET  /api/monitor/status               - Monitor runtime state")
+    print("  GET  /api/monitor/policy               - Effective monitor policy")
+    print("  GET  /api/monitor/runtime              - Per-service due/backoff state")
     print("  GET  /api/health                       - Health check\n")
 
 

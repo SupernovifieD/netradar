@@ -86,6 +86,13 @@ def build_parser() -> argparse.ArgumentParser:
     monitor_stop.set_defaults(command_id="monitor.stop")
     monitor_status = monitor_sub.add_parser("status", help="Get backend monitor state.")
     monitor_status.set_defaults(command_id="monitor.status")
+    monitor_policy = monitor_sub.add_parser("policy", help="Get effective monitor policy defaults.")
+    monitor_policy.set_defaults(command_id="monitor.policy")
+    monitor_runtime = monitor_sub.add_parser(
+        "runtime",
+        help="Get per-service monitor runtime state (due/backoff).",
+    )
+    monitor_runtime.set_defaults(command_id="monitor.runtime")
 
     probe = root.add_parser("probe", help="Diagnostic probe commands.")
     probe_sub = probe.add_subparsers(dest="probe_command", required=True)

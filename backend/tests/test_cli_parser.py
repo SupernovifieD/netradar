@@ -48,6 +48,11 @@ class CliParserTests(unittest.TestCase):
         self.assertAlmostEqual(args.min_uptime, 98.5)
         self.assertAlmostEqual(args.max_p95_latency, 85.0)
 
+    def test_monitor_runtime_parsing(self) -> None:
+        args = self.parser.parse_args(["--mode", "api", "monitor", "runtime"])
+        self.assertEqual(args.command_id, "monitor.runtime")
+        self.assertEqual(args.mode, "api")
+
 
 if __name__ == "__main__":
     unittest.main()

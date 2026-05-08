@@ -17,8 +17,12 @@ DNS_TIMEOUT_SECONDS: Final[int] = 2
 HTTP_TIMEOUT_SECONDS: Final[int] = 2
 PING_COUNT: Final[int] = 4
 PING_TIMEOUT_SECONDS: Final[int] = 1
+HTTP_HEADERS: Final[dict[str, str]] = {
+    "User-Agent": "NetRadar/1.0 (+https://github.com/netradar)",
+    "Accept": "*/*",
+}
 
-ServiceCheckResult = tuple[str, str, str, str, str, str]
+ServiceCheckResult = tuple[str, str, str, str, str, str, str, int | None]
 
 
 def dns_check(domain: str, timeout: int = DNS_TIMEOUT_SECONDS) -> str:
@@ -31,33 +35,44 @@ def dns_check(domain: str, timeout: int = DNS_TIMEOUT_SECONDS) -> str:
         return "FAIL"
 
 
-def tcp_check(domain: str) -> str:
+def _classify_http_response(protocol: str, status_code: int) -> tuple[str, str, int]:
+    """Map HTTP response status to normalized transport/probe reason."""
+    if status_code == 403:
+        return (protocol, "FORBIDDEN", status_code)
+    if status_code == 429:
+        return (protocol, "RATE_LIMITED", status_code)
+    return (protocol, "OK", status_code)
+
+
+def tcp_check(domain: str) -> tuple[str, str, int | None]:
     """Return transport accessibility state for a domain.
 
     Priority is HTTPS first, then HTTP, then ``FAIL`` if both fail.
     """
     try:
-        requests.head(
+        response = requests.head(
             f"https://{domain}",
             timeout=HTTP_TIMEOUT_SECONDS,
             allow_redirects=True,
             verify=False,
+            headers=HTTP_HEADERS,
         )
-        return "HTTPS"
+        return _classify_http_response("HTTPS", response.status_code)
     except RequestException:
         pass
 
     try:
-        requests.head(
+        response = requests.head(
             f"http://{domain}",
             timeout=HTTP_TIMEOUT_SECONDS,
             allow_redirects=True,
+            headers=HTTP_HEADERS,
         )
-        return "HTTP"
+        return _classify_http_response("HTTP", response.status_code)
     except RequestException:
-        pass
+        return ("FAIL", "TCP_FAIL", None)
 
-    return "FAIL"
+    return ("FAIL", "TCP_FAIL", None)
 
 
 def ping_stats(domain: str) -> tuple[str, str]:
@@ -99,7 +114,10 @@ def compute_status(dns: str, tcp: str) -> str:
 def check_service(service: str) -> ServiceCheckResult:
     """Run all configured checks for one service domain."""
     dns = dns_check(service)
-    tcp = tcp_check(service) if dns == "OK" else "FAIL"
+    if dns == "OK":
+        tcp, probe_reason, http_status_code = tcp_check(service)
+    else:
+        tcp, probe_reason, http_status_code = ("FAIL", "DNS_FAIL", None)
     latency, packet_loss = ping_stats(service)
     status = compute_status(dns, tcp)
-    return (service, dns, tcp, latency, packet_loss, status)
+    return (service, dns, tcp, latency, packet_loss, status, probe_reason, http_status_code)

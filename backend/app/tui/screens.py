@@ -11,6 +11,7 @@ from textual.containers import Horizontal, VerticalScroll
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
+from app.services.monitor import monitor
 from app.tui.catalog import ServiceCatalog, ServiceCatalogItem
 from app.tui.render import (
     build_bucket_bar,
@@ -18,10 +19,13 @@ from app.tui.render import (
     build_sparkline,
     compute_series_stats,
     format_updated_at,
+    style_backoff_seconds,
     style_dns,
+    style_http_status_code,
     style_latency,
     style_metric_value,
     style_packet_loss,
+    style_probe_reason,
     style_status,
     style_tcp,
     style_timestamp,
@@ -166,6 +170,13 @@ class ServiceDetailScreen(Screen):
 
     def _refresh(self) -> None:
         rows = fetch_recent_checks(self._service.domain, limit=10_000)
+        runtime_rows = monitor.get_runtime_snapshot().get("services", [])
+        runtime_by_domain = {
+            row.get("domain"): row
+            for row in runtime_rows
+            if isinstance(row, dict) and row.get("domain")
+        }
+        runtime = runtime_by_domain.get(self._service.domain, {})
 
         meta_widget = self.query_one("#detail-meta", Static)
         buckets_widget = self.query_one("#detail-buckets", Static)
@@ -190,12 +201,22 @@ class ServiceDetailScreen(Screen):
             meta_text.append_text(style_latency(latest.get("latency", "na")))
             meta_text.append(" ms | Loss: ")
             meta_text.append_text(style_packet_loss(latest.get("packet_loss", "na")))
+            meta_text.append(" | Reason: ")
+            meta_text.append_text(style_probe_reason(str(latest.get("probe_reason") or "UNKNOWN")))
+            meta_text.append(" | HTTP: ")
+            meta_text.append_text(style_http_status_code(latest.get("http_status_code")))
             meta_text.append(" | Last Seen: ")
             meta_text.append_text(
                 style_timestamp(
                     f"{latest.get('date', '')} {latest.get('time', '')}".strip() or "n/a"
                 )
             )
+            next_due_raw = str(runtime.get("next_due_at_utc") or "").strip()
+            next_due = next_due_raw.replace("T", " ").replace("+00:00", "Z") if next_due_raw else "n/a"
+            meta_text.append("\nNext Check: ")
+            meta_text.append_text(style_timestamp(next_due))
+            meta_text.append(" | Backoff: ")
+            meta_text.append_text(style_backoff_seconds(int(runtime.get("current_backoff_seconds") or 0)))
         else:
             meta_text.append("No checks are available yet for this service.", style="#9f9f9f")
 
@@ -303,7 +324,20 @@ class ServiceDashboardScreen(Screen):
         yield Input(placeholder="Search by name or domain...", id="search-input")
 
         table = DataTable(id="services-table", zebra_stripes=True)
-        table.add_columns("Name", "Domain", "Status", "DNS", "TCP", "Latency", "Loss", "Last Seen")
+        table.add_columns(
+            "Name",
+            "Domain",
+            "Status",
+            "Reason",
+            "HTTP",
+            "DNS",
+            "TCP",
+            "Latency",
+            "Loss",
+            "Backoff",
+            "Next Due",
+            "Last Seen",
+        )
         yield table
 
         yield Static("", id="services-status")
@@ -384,7 +418,13 @@ class ServiceDashboardScreen(Screen):
             self._set_status(f"Failed to load services catalog: {exc}")
             return
 
-        self._stats = fetch_latest_stats(catalog_items)
+        runtime_rows = monitor.get_runtime_snapshot().get("services", [])
+        runtime_by_domain = {
+            row.get("domain"): row
+            for row in runtime_rows
+            if isinstance(row, dict) and row.get("domain")
+        }
+        self._stats = fetch_latest_stats(catalog_items, runtime_by_domain=runtime_by_domain)
         visible_count = self._render_table()
 
         total = len(self._stats)
@@ -411,14 +451,23 @@ class ServiceDashboardScreen(Screen):
 
             visible_count += 1
             visible_domains.append(service.domain)
+            next_due = (
+                stats.next_due_at_utc.replace("T", " ").replace("+00:00", "Z")
+                if stats.next_due_at_utc
+                else "n/a"
+            )
             table.add_row(
                 service.name,
                 service.domain,
                 style_status(stats.status),
+                style_probe_reason(stats.probe_reason),
+                style_http_status_code(stats.http_status_code),
                 style_dns(stats.dns),
                 style_tcp(stats.tcp),
                 style_latency(stats.latency),
                 style_packet_loss(stats.packet_loss),
+                style_backoff_seconds(stats.current_backoff_seconds),
+                style_timestamp(next_due),
                 style_timestamp(stats.last_seen),
                 key=service.domain,
             )

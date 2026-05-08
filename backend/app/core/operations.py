@@ -203,10 +203,20 @@ class NetRadarOperations:
             "thread_alive": bool(self._monitor.thread and self._monitor.thread.is_alive()),
         }
 
+    def monitor_policy(self) -> dict[str, Any]:
+        """Return effective monitor policy defaults and service schedules."""
+        return self._monitor.get_policy_snapshot()
+
+    def monitor_runtime(self) -> dict[str, Any]:
+        """Return in-memory monitor runtime scheduling and backoff state."""
+        return self._monitor.get_runtime_snapshot()
+
     def probe_service(self, service: str) -> dict[str, Any]:
         """Run one diagnostic probe without persistence side effects."""
         try:
-            svc, dns, tcp, latency, packet_loss, status = check_service(service)
+            svc, dns, tcp, latency, packet_loss, status, probe_reason, http_status_code = check_service(
+                service
+            )
         except Exception as exc:  # pragma: no cover - defensive network surface
             raise CoreError(
                 code="PROBE_FAILED",
@@ -223,6 +233,8 @@ class NetRadarOperations:
             "latency": latency,
             "packet_loss": packet_loss,
             "status": status,
+            "probe_reason": probe_reason,
+            "http_status_code": http_status_code,
             "probed_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         }
 

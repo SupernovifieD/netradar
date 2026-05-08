@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from config import Config
 
@@ -17,15 +18,21 @@ class ServiceCatalogItem:
     name: str
     group: str
     category: str
+    monitoring: dict[str, Any] | None = None
+    extras: dict[str, Any] = field(default_factory=dict)
 
-    def as_dict(self) -> dict[str, str]:
+    def as_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable dictionary representation."""
-        return {
+        output: dict[str, Any] = {
             "domain": self.domain,
             "name": self.name,
             "group": self.group,
             "category": self.category,
         }
+        if self.monitoring is not None:
+            output["monitoring"] = self.monitoring
+        output.update(self.extras)
+        return output
 
 
 class ServiceCatalog:
@@ -46,17 +53,25 @@ class ServiceCatalog:
 
         items: list[ServiceCatalogItem] = []
         for item in raw_items:
+            monitoring = item.get("monitoring")
+            extras = {
+                key: value
+                for key, value in item.items()
+                if key not in {"domain", "name", "group", "category", "monitoring"}
+            }
             items.append(
                 ServiceCatalogItem(
                     domain=item["domain"].strip(),
                     name=item["name"].strip(),
                     group=item["group"].strip(),
                     category=item["category"].strip(),
+                    monitoring=monitoring if isinstance(monitoring, dict) else None,
+                    extras=extras,
                 )
             )
         return items
 
-    def load_dicts(self) -> list[dict[str, str]]:
+    def load_dicts(self) -> list[dict[str, Any]]:
         """Load all catalog rows as dictionaries."""
         return [item.as_dict() for item in self.load()]
 

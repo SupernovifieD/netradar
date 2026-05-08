@@ -8,7 +8,7 @@ from typing import Any
 from app.db import get_connection
 from config import Config
 
-CheckWriteRow = tuple[str, str, str, str, str, str]
+CheckWriteRow = tuple[str, str, str, str, str, str, str | None, int | None]
 
 
 class CheckResult:
@@ -22,13 +22,28 @@ class CheckResult:
         dns: str,
         tcp: str,
         status: str,
+        probe_reason: str | None = None,
+        http_status_code: int | None = None,
     ) -> None:
         """Persist one monitoring result row.
 
         The schema stores date and time as separate text fields to preserve
         compatibility with existing queries and dashboard parsing.
         """
-        CheckResult.save_many([(service, latency, packet_loss, dns, tcp, status)])
+        CheckResult.save_many(
+            [
+                (
+                    service,
+                    latency,
+                    packet_loss,
+                    dns,
+                    tcp,
+                    status,
+                    probe_reason,
+                    http_status_code,
+                )
+            ]
+        )
 
     @staticmethod
     def save_many(rows: list[CheckWriteRow]) -> None:
@@ -41,18 +56,49 @@ class CheckResult:
             return
 
         dated_rows = []
-        for service, latency, packet_loss, dns, tcp, status in rows:
+        for row in rows:
+            if len(row) == 6:
+                service, latency, packet_loss, dns, tcp, status = row
+                probe_reason = None
+                http_status_code = None
+            else:
+                (
+                    service,
+                    latency,
+                    packet_loss,
+                    dns,
+                    tcp,
+                    status,
+                    probe_reason,
+                    http_status_code,
+                ) = row
             now = datetime.now()
             date = now.strftime("%Y-%m-%d")
             time = now.strftime("%H:%M:%S")
-            dated_rows.append((service, latency, packet_loss, dns, tcp, status, date, time))
+            dated_rows.append(
+                (
+                    service,
+                    latency,
+                    packet_loss,
+                    dns,
+                    tcp,
+                    status,
+                    probe_reason,
+                    http_status_code,
+                    date,
+                    time,
+                )
+            )
 
         with get_connection(Config.DATABASE_PATH) as connection:
             cursor = connection.cursor()
             cursor.executemany(
                 """
-                INSERT INTO checks (service, latency, packet_loss, dns, tcp, status, date, time)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO checks (
+                    service, latency, packet_loss, dns, tcp, status,
+                    probe_reason, http_status_code, date, time
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 dated_rows,
             )

@@ -72,6 +72,10 @@ def execute_command(args: Namespace, transport: Any) -> tuple[Any, dict[str, Any
         data = transport.monitor_stop()
     elif command == "monitor.status":
         data = transport.monitor_status()
+    elif command == "monitor.policy":
+        data = transport.monitor_policy()
+    elif command == "monitor.runtime":
+        data = transport.monitor_runtime()
     elif command == "probe.service":
         data = transport.probe_service(args.service)
         meta["service"] = args.service

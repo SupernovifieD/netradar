@@ -23,7 +23,7 @@ Mode behavior:
 
 - `local`: reads local DB/files directly, no backend server required.
 - `api`: talks to a running backend over HTTP.
-- `monitor start|stop|status`: API mode only.
+- `monitor start|stop|status|policy|runtime`: API mode only.
 - `probe service`: local mode only.
 
 ## 2) Available CLI Commands
@@ -38,7 +38,7 @@ Mode behavior:
 - `daily services [--day YYYY-MM-DD] [--limit N] [--offset N]`
 - `export raw <domain> [--days N<=90] [--out PATH]`
 - `export daily <domain> [--days N<=90] [--out PATH]`
-- `monitor start|stop|status`
+- `monitor start|stop|status|policy|runtime`
 - `probe service <domain>`
 - `ops snapshot <domain> [--history-limit N] [--daily-limit N]`
 - `ops gate <domain> [--days N] [--min-uptime PCT] [--max-p95-latency MS]`
@@ -109,9 +109,21 @@ python cli.py export daily google.com --days 90 --out ./exports/google-daily.jso
 
 ```bash
 python cli.py --mode api --json monitor status
+python cli.py --mode api --json monitor policy
+python cli.py --mode api --json monitor runtime
 python cli.py --mode api --json monitor start
 python cli.py --mode api --json monitor stop
 ```
+
+### E) Inspect probe reasons for access restrictions vs outages
+
+```bash
+python cli.py --json history service example.com --limit 50
+```
+
+Use `probe_reason` and `http_status_code` to distinguish:
+- `FORBIDDEN` / `RATE_LIMITED` (reachable but restricted)
+- `DNS_FAIL` / `TCP_FAIL` / transport failure (true reachability issues)
 
 ## 5) Reusable Helper Skills (Code-Level)
 

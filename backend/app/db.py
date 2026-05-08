@@ -22,6 +22,8 @@ CHECKS_TABLE_SQL: Final[str] = """
         dns TEXT,
         tcp TEXT,
         status TEXT,
+        probe_reason TEXT,
+        http_status_code INTEGER,
         date TEXT,
         time TEXT
     )
@@ -84,6 +86,18 @@ def init_db(db_path: str) -> None:
         cursor.execute("PRAGMA synchronous=NORMAL")
 
         cursor.execute(CHECKS_TABLE_SQL)
+        _ensure_checks_columns(cursor)
         for statement in INDEX_SQL:
             cursor.execute(statement)
         connection.commit()
+
+
+def _ensure_checks_columns(cursor: sqlite3.Cursor) -> None:
+    """Add newly introduced checks columns on existing databases."""
+    cursor.execute("PRAGMA table_info(checks)")
+    columns = {row[1] for row in cursor.fetchall()}
+
+    if "probe_reason" not in columns:
+        cursor.execute("ALTER TABLE checks ADD COLUMN probe_reason TEXT")
+    if "http_status_code" not in columns:
+        cursor.execute("ALTER TABLE checks ADD COLUMN http_status_code INTEGER")

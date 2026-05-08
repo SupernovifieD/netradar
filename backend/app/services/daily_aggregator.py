@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import math
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
@@ -10,10 +9,10 @@ from typing import Any
 
 from app.daily_models import DailyIntervalRow, DailyServiceHistory, DailySummaryRow
 from app.models import CheckResult
+from app.services.monitoring_policy import ServiceMonitoringPolicy, load_service_monitoring_policies
 from config import Config
 
 AGGREGATION_ALGO_VERSION = 1
-EXPECTED_DAY_SECONDS = 86_400
 STATUS_UP_THRESHOLD = 95.0
 STATUS_DEGRADED_THRESHOLD = 80.0
 
@@ -22,27 +21,19 @@ class DailyAggregator:
     """Build and persist immutable closed-day aggregate rows."""
 
     def __init__(self) -> None:
-        self._check_interval_seconds = Config.CHECK_INTERVAL
         self._backfill_days = Config.DAILY_BACKFILL_DAYS
         self._backfill_done = False
-
-        if self._check_interval_seconds <= 0:
-            raise ValueError("CHECK_INTERVAL must be a positive integer")
-        if EXPECTED_DAY_SECONDS % self._check_interval_seconds != 0:
-            raise ValueError("CHECK_INTERVAL must cleanly divide 86400 seconds")
-
-        self._slots_per_day = EXPECTED_DAY_SECONDS // self._check_interval_seconds
 
     def run(self) -> None:
         """Run daily aggregation for missing closed UTC days."""
         today_utc = datetime.now(timezone.utc).date()
-        services = self._load_services()
+        policies = load_service_monitoring_policies()
         target_days = self._get_target_days(today_utc=today_utc)
 
         for day_utc in target_days:
             if day_utc >= today_utc:
                 continue
-            self._aggregate_day(day_utc=day_utc, services=services)
+            self._aggregate_day(day_utc=day_utc, policies=policies)
 
         self._backfill_done = True
 
@@ -56,13 +47,7 @@ class DailyAggregator:
 
         return [today_utc - timedelta(days=1)]
 
-    def _load_services(self) -> list[str]:
-        """Load service domain names from ``services.json``."""
-        with open(Config.SERVICES_FILE, encoding="utf-8") as service_file:
-            services = json.load(service_file)
-        return [service["domain"] for service in services]
-
-    def _aggregate_day(self, day_utc: date, services: list[str]) -> None:
+    def _aggregate_day(self, day_utc: date, policies: list[ServiceMonitoringPolicy]) -> None:
         """Aggregate one closed day for all monitored services."""
         day_utc_str = day_utc.isoformat()
         existing_services = DailyServiceHistory.get_services_with_summary(day_utc_str)
@@ -78,11 +63,14 @@ class DailyAggregator:
         for row in raw_rows:
             rows_by_service[row["service"]].append(row)
 
-        for service in services:
+        for policy in policies:
+            service = policy.domain
+            if not policy.enabled:
+                continue
             if service in existing_services:
                 continue
             summary, intervals = self._build_service_day_summary(
-                service=service,
+                policy=policy,
                 day_start_utc=day_start,
                 service_rows=rows_by_service.get(service, []),
             )
@@ -90,12 +78,17 @@ class DailyAggregator:
 
     def _build_service_day_summary(
         self,
-        service: str,
+        policy: ServiceMonitoringPolicy,
         day_start_utc: datetime,
         service_rows: list[dict[str, Any]],
     ) -> tuple[DailySummaryRow, list[DailyIntervalRow]]:
         """Build one service/day summary plus interval rows."""
-        slots: list[dict[str, Any] | None] = [None] * self._slots_per_day
+        service = policy.domain
+        slot_bounds = self._build_slot_bounds(
+            day_start_utc=day_start_utc,
+            interval_seconds=policy.interval_seconds,
+        )
+        slots: list[dict[str, Any] | None] = [None] * len(slot_bounds)
         check_times: list[datetime] = []
         latencies: list[float] = []
         checks_up = 0
@@ -103,8 +96,8 @@ class DailyAggregator:
 
         for row in service_rows:
             timestamp = self._parse_utc_timestamp(row["date"], row["time"])
-            slot_index = int((timestamp - day_start_utc).total_seconds() // self._check_interval_seconds)
-            if slot_index < 0 or slot_index >= self._slots_per_day:
+            slot_index = int((timestamp - day_start_utc).total_seconds() // policy.interval_seconds)
+            if slot_index < 0 or slot_index >= len(slot_bounds):
                 continue
 
             current = slots[slot_index]
@@ -126,17 +119,27 @@ class DailyAggregator:
                 latencies.append(latency)
 
         slot_states = self._build_slot_states(slots)
-        uptime_slots = sum(1 for state in slot_states if state == "UP")
-        downtime_slots = sum(1 for state in slot_states if state == "DOWN")
+        uptime_seconds = 0
+        downtime_seconds = 0
+        no_data_seconds = 0
+        for index, state in enumerate(slot_states):
+            slot_duration = slot_bounds[index][2]
+            if state == "UP":
+                uptime_seconds += slot_duration
+            elif state == "DOWN":
+                downtime_seconds += slot_duration
+            else:
+                no_data_seconds += slot_duration
+
         no_data_slots = sum(1 for state in slot_states if state == "NO_DATA")
 
-        uptime_seconds = uptime_slots * self._check_interval_seconds
-        downtime_seconds = downtime_slots * self._check_interval_seconds
-        no_data_seconds = no_data_slots * self._check_interval_seconds
+        expected_seconds = sum(duration for _, _, duration in slot_bounds)
         observed_seconds = uptime_seconds + downtime_seconds
 
-        uptime_rate_pct = (uptime_seconds / EXPECTED_DAY_SECONDS) * 100
-        coverage_rate_pct = (observed_seconds / EXPECTED_DAY_SECONDS) * 100
+        uptime_rate_pct = (uptime_seconds / expected_seconds) * 100 if expected_seconds > 0 else 0.0
+        coverage_rate_pct = (
+            (observed_seconds / expected_seconds) * 100 if expected_seconds > 0 else 0.0
+        )
         checks_total = checks_up + checks_down
         checks_no_data = no_data_slots
 
@@ -148,7 +151,7 @@ class DailyAggregator:
             "uptime_seconds": uptime_seconds,
             "downtime_seconds": downtime_seconds,
             "no_data_seconds": no_data_seconds,
-            "expected_seconds": EXPECTED_DAY_SECONDS,
+            "expected_seconds": expected_seconds,
             "observed_seconds": observed_seconds,
             "coverage_rate_pct": round(coverage_rate_pct, 6),
             "checks_total": checks_total,
@@ -167,7 +170,7 @@ class DailyAggregator:
         intervals = self._build_intervals(
             service=service,
             day_utc=summary["day_utc"],
-            day_start_utc=day_start_utc,
+            slot_bounds=slot_bounds,
             slot_states=slot_states,
         )
         return summary, intervals
@@ -188,7 +191,7 @@ class DailyAggregator:
         self,
         service: str,
         day_utc: str,
-        day_start_utc: datetime,
+        slot_bounds: list[tuple[datetime, datetime, int]],
         slot_states: list[str],
     ) -> list[DailyIntervalRow]:
         """Compress contiguous DOWN/NO_DATA slot runs into interval rows."""
@@ -205,8 +208,9 @@ class DailyAggregator:
                 index += 1
             end = index
 
-            start_time = day_start_utc + timedelta(seconds=start * self._check_interval_seconds)
-            end_time = day_start_utc + timedelta(seconds=end * self._check_interval_seconds)
+            start_time = slot_bounds[start][0]
+            end_time = slot_bounds[end - 1][1]
+            duration_seconds = sum(slot_bounds[offset][2] for offset in range(start, end))
             intervals.append(
                 {
                     "service": service,
@@ -214,10 +218,29 @@ class DailyAggregator:
                     "interval_type": state,
                     "start_at_utc": self._format_datetime(start_time),
                     "end_at_utc": self._format_datetime(end_time),
-                    "duration_seconds": (end - start) * self._check_interval_seconds,
+                    "duration_seconds": duration_seconds,
                 }
             )
         return intervals
+
+    def _build_slot_bounds(
+        self,
+        *,
+        day_start_utc: datetime,
+        interval_seconds: int,
+    ) -> list[tuple[datetime, datetime, int]]:
+        """Build day slot boundaries for a service cadence."""
+        bounds: list[tuple[datetime, datetime, int]] = []
+        day_end_utc = day_start_utc + timedelta(days=1)
+        cursor = day_start_utc
+
+        while cursor < day_end_utc:
+            end = min(day_end_utc, cursor + timedelta(seconds=interval_seconds))
+            duration_seconds = int((end - cursor).total_seconds())
+            bounds.append((cursor, end, duration_seconds))
+            cursor = end
+
+        return bounds
 
     def _classify_day_status(self, uptime_rate_pct: float) -> str:
         """Return UP/DEGRADED/DOWN classification from uptime percentage."""

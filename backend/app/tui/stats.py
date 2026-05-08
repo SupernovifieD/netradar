@@ -22,8 +22,12 @@ class ServiceLatestStats:
     tcp: str
     latency: str
     packet_loss: str
+    probe_reason: str
+    http_status_code: int | None
     date: str
     time: str
+    next_due_at_utc: str | None
+    current_backoff_seconds: int
 
     @property
     def last_seen(self) -> str:
@@ -91,17 +95,23 @@ def determine_bucket_color(up_percent: float, avg_latency: float | None) -> str:
     return "grey"
 
 
-def fetch_latest_stats(catalog_items: list[ServiceCatalogItem]) -> list[ServiceLatestStats]:
+def fetch_latest_stats(
+    catalog_items: list[ServiceCatalogItem],
+    *,
+    runtime_by_domain: dict[str, dict[str, Any]] | None = None,
+) -> list[ServiceLatestStats]:
     """Return latest stats for every service in the catalog.
 
     Services without data are still included with ``n/a`` placeholders.
     """
+    runtime_by_domain = runtime_by_domain or {}
     latest_rows = CheckResult.get_services_status()
     rows_by_domain = {row["service"]: row for row in latest_rows}
 
     stats: list[ServiceLatestStats] = []
     for service in catalog_items:
         row = rows_by_domain.get(service.domain)
+        runtime = runtime_by_domain.get(service.domain, {})
         if row is None:
             stats.append(
                 ServiceLatestStats(
@@ -111,8 +121,12 @@ def fetch_latest_stats(catalog_items: list[ServiceCatalogItem]) -> list[ServiceL
                     tcp="NO_DATA",
                     latency="na",
                     packet_loss="na",
+                    probe_reason="NO_DATA",
+                    http_status_code=None,
                     date="",
                     time="",
+                    next_due_at_utc=str(runtime.get("next_due_at_utc") or ""),
+                    current_backoff_seconds=int(runtime.get("current_backoff_seconds") or 0),
                 )
             )
             continue
@@ -125,8 +139,12 @@ def fetch_latest_stats(catalog_items: list[ServiceCatalogItem]) -> list[ServiceL
                 tcp=row.get("tcp", "NO_DATA"),
                 latency=row.get("latency", "na"),
                 packet_loss=row.get("packet_loss", "na"),
+                probe_reason=row.get("probe_reason") or "UNKNOWN",
+                http_status_code=row.get("http_status_code"),
                 date=row.get("date", ""),
                 time=row.get("time", ""),
+                next_due_at_utc=str(runtime.get("next_due_at_utc") or ""),
+                current_backoff_seconds=int(runtime.get("current_backoff_seconds") or 0),
             )
         )
 

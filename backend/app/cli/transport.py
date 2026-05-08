@@ -83,6 +83,12 @@ class LocalTransport:
     def monitor_status(self) -> dict[str, Any]:
         return self._safe(self._operations.monitor_status)
 
+    def monitor_policy(self) -> dict[str, Any]:
+        return self._safe(self._operations.monitor_policy)
+
+    def monitor_runtime(self) -> dict[str, Any]:
+        return self._safe(self._operations.monitor_runtime)
+
     def probe_service(self, service: str) -> dict[str, Any]:
         return self._safe(lambda: self._operations.probe_service(service))
 
@@ -232,6 +238,12 @@ class ApiTransport:
 
     def monitor_status(self) -> dict[str, Any]:
         return self._get("/monitor/status")
+
+    def monitor_policy(self) -> dict[str, Any]:
+        return self._get("/monitor/policy")
+
+    def monitor_runtime(self) -> dict[str, Any]:
+        return self._get("/monitor/runtime")
 
     def probe_service(self, service: str) -> dict[str, Any]:
         # Probe command is intentionally local-only in v1.

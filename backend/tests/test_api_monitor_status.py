@@ -10,7 +10,7 @@ from app import create_app
 
 
 class ApiMonitorStatusTests(unittest.TestCase):
-    """Verify `/api/monitor/status` response shape."""
+    """Verify monitor introspection endpoint response shapes."""
 
     def test_monitor_status_endpoint(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -31,6 +31,19 @@ class ApiMonitorStatusTests(unittest.TestCase):
             self.assertTrue(payload["success"])
             self.assertIn("running", payload)
             self.assertIn("thread_alive", payload)
+
+            policy_response = client.get("/api/monitor/policy")
+            self.assertEqual(policy_response.status_code, 200)
+            policy_payload = policy_response.get_json()
+            self.assertTrue(policy_payload["success"])
+            self.assertIn("defaults", policy_payload)
+            self.assertIn("services", policy_payload)
+
+            runtime_response = client.get("/api/monitor/runtime")
+            self.assertEqual(runtime_response.status_code, 200)
+            runtime_payload = runtime_response.get_json()
+            self.assertTrue(runtime_payload["success"])
+            self.assertIn("services", runtime_payload)
 
 
 if __name__ == "__main__":

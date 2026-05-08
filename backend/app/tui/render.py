@@ -71,6 +71,41 @@ def style_tcp(value: str) -> Text:
     return _text("NO DATA", "#9f9f9f")
 
 
+def style_probe_reason(value: str) -> Text:
+    """Return styled probe-reason text."""
+    if value in {"OK"}:
+        return _text(value, "#2ecc71")
+    if value in {"FORBIDDEN", "RATE_LIMITED"}:
+        return _text(value, "#f1c40f")
+    if value in {"DNS_FAIL", "TCP_FAIL", "CHECK_EXCEPTION"}:
+        return _text(value, "#e74c3c")
+    if value in {"NO_DATA"}:
+        return _text(value, "#9f9f9f")
+    return _text(value or "UNKNOWN", "#a6a6a6")
+
+
+def style_http_status_code(value: int | None) -> Text:
+    """Return styled HTTP status-code text."""
+    if value is None:
+        return _text("-", "#9f9f9f")
+    if 200 <= value < 300:
+        return _text(str(value), "#2ecc71")
+    if value in {403, 429}:
+        return _text(str(value), "#f1c40f")
+    if 400 <= value < 600:
+        return _text(str(value), "#e74c3c")
+    return _text(str(value), "#a6a6a6")
+
+
+def style_backoff_seconds(value: int) -> Text:
+    """Return styled backoff seconds text."""
+    if value <= 0:
+        return _text("0s", "#2ecc71")
+    if value <= 180:
+        return _text(f"{value}s", "#f1c40f")
+    return _text(f"{value}s", "#e67e22")
+
+
 def style_latency(value: str) -> Text:
     """Return styled latency text with thresholds."""
     parsed = _parse_float(value)

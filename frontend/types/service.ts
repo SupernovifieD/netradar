@@ -6,6 +6,8 @@ export interface ServiceCheck {
   dns: string;
   tcp: string;
   status: string;
+  probe_reason?: string | null;
+  http_status_code?: number | null;
   date: string; // "2026-04-29"
   time: string; // "20:12:51"
 }

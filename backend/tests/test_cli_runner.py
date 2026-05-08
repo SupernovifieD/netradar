@@ -17,6 +17,12 @@ class FakeTransport:
     def monitor_status(self):
         return {"running": True, "thread_alive": True}
 
+    def monitor_policy(self):
+        return {"defaults": {"check_interval_seconds": 60}, "services": []}
+
+    def monitor_runtime(self):
+        return {"services": []}
+
     def probe_service(self, service: str):
         return {"service": service, "status": "UP"}
 
@@ -43,7 +49,7 @@ class CliRunnerTests(unittest.TestCase):
         self.transport = FakeTransport()
 
     def test_monitor_commands_are_api_mode_only(self) -> None:
-        args = self.parser.parse_args(["monitor", "status"])
+        args = self.parser.parse_args(["monitor", "policy"])
         with self.assertRaises(CLIError) as context:
             execute_command(args, self.transport)
         self.assertEqual(context.exception.exit_code, EXIT_UNSUPPORTED_MODE)

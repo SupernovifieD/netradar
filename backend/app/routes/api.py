@@ -171,6 +171,24 @@ def monitor_status():
     return success_response(**payload)
 
 
+@bp.route("/monitor/policy", methods=["GET"])
+def monitor_policy():
+    """Return effective monitor defaults and per-service schedule config."""
+    payload, error = _run(core.monitor_policy)
+    if error:
+        return error
+    return success_response(**payload)
+
+
+@bp.route("/monitor/runtime", methods=["GET"])
+def monitor_runtime():
+    """Return in-memory monitor runtime state (due time + backoff)."""
+    payload, error = _run(core.monitor_runtime)
+    if error:
+        return error
+    return success_response(**payload)
+
+
 @bp.route("/health", methods=["GET"])
 def health():
     """Simple health endpoint for uptime checks."""

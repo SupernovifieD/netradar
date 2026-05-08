@@ -101,6 +101,10 @@ Validation failures use:
 
 - `GET /services`
   - Returns static service metadata loaded from `services.json`.
+  - Optional filters:
+    - `search=<text>` (matches name/domain, case-insensitive)
+    - `group=<exact group>`
+    - `category=<exact category>`
   - Response payload: `data` (service metadata array).
 
 ### Daily aggregate endpoints
@@ -148,6 +152,10 @@ Validation failures use:
   - Stops the in-process background monitor thread.
   - Response payload: `message`.
 
+- `GET /monitor/status`
+  - Returns monitor runtime state for this backend process.
+  - Response payload: `running`, `thread_alive`.
+
 - `GET /health`
   - Basic liveness endpoint.
   - Response payload: `status` (`healthy`).
@@ -177,7 +185,7 @@ The backend now includes a Textual TUI with two screens:
 2. **Service detail**:
    - Opens from the selected row on the dashboard (`Enter`).
    - Shows service metadata + latest check metrics.
-   - Shows 24h status buckets (same color logic as frontend).
+   - Shows 6h status buckets (same color logic as frontend).
    - Shows latency and jitter graphs for the last 6 hours.
 
 ### Run the TUI
@@ -192,6 +200,7 @@ python tui.py
 
 - `Enter`: open selected service detail
 - `/`: focus search input
+- `Esc`: clear search and return focus to table
 - `r`: refresh now
 - `a`: add service to `services.json`
 - `d`: delete selected service from `services.json` (requires typed confirmation)
@@ -201,3 +210,93 @@ python tui.py
 
 - `b` or `Esc`: back to dashboard
 - `r`: refresh now
+
+## CLI Automation Interface
+
+NetRadar provides a deterministic CLI for scripts, CI/CD, and AI agents.
+
+Run from `backend/`:
+
+```bash
+python cli.py --help
+```
+
+### Global flags
+
+- `--mode local|api` (default: `local`)
+- `--api-base-url` (default: `http://localhost:5001/api`)
+- `--timeout-sec` (API mode request timeout)
+- `--json` (machine-friendly output envelope)
+- `--fail-on-empty` (treat empty result as failure)
+- `--debug` (print traceback on error)
+
+### Command groups
+
+- `health`
+- `services list [--search TEXT] [--group TEXT] [--category TEXT]`
+- `status current`
+- `history recent [--limit N]`
+- `history 24h`
+- `history service <domain> [--limit N]`
+- `daily service <domain> [--limit N] [--before-day YYYY-MM-DD]`
+- `daily services [--day YYYY-MM-DD] [--limit N] [--offset N]`
+- `export raw <domain> [--days N<=90] [--out PATH]`
+- `export daily <domain> [--days N<=90] [--out PATH]`
+- `monitor start|stop|status` (API mode only)
+- `probe service <domain>` (local mode only)
+- `ops snapshot <domain> [--history-limit N] [--daily-limit N]`
+- `ops gate <domain> [--days N] [--min-uptime PCT] [--max-p95-latency MS]`
+
+### JSON envelope contract (`--json`)
+
+All commands return:
+
+```json
+{
+  "ok": true,
+  "command": "history.service",
+  "mode": "local",
+  "timestamp_utc": "2026-05-08T08:00:00Z",
+  "data": {},
+  "meta": {},
+  "error": null
+}
+```
+
+Error responses keep the same envelope with:
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "SOME_ERROR_CODE",
+    "message": "Human-readable message",
+    "details": {}
+  }
+}
+```
+
+### Exit codes
+
+- `0`: success
+- `2`: CLI argument/usage error
+- `3`: validation/business-rule error
+- `4`: empty result when `--fail-on-empty` is set
+- `5`: local runtime/dependency error
+- `6`: API returned error response
+- `7`: API transport/timeout error
+- `8`: unsupported command in selected mode
+- `10`: unexpected internal error
+
+### Example automation commands
+
+```bash
+# JSON health check
+python cli.py --json health
+
+# Gate decision (fails if no data/threshold violations; inspect JSON reasons)
+python cli.py --json ops gate google.com --days 30 --min-uptime 99 --max-p95-latency 120
+
+# Remote monitor status
+python cli.py --mode api --json monitor status
+```

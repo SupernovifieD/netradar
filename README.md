@@ -109,6 +109,60 @@ python tui.py
 - `b` or `Esc` (detail screen): go back
 - `q`: quit
 
+## CLI Automation Interface
+
+NetRadar includes a robust automation CLI for scripts, CI/CD, and AI agents.
+
+### Run it
+
+From `backend/`:
+
+```bash
+source .venv/bin/activate
+python cli.py --help
+```
+
+### Quick examples
+
+```bash
+# Health check
+python cli.py health
+
+# Current status for all services
+python cli.py status current
+
+# Recent history
+python cli.py history recent --limit 200
+
+# Daily history for one service
+python cli.py daily service google.com --limit 60
+
+# Export raw data and save it
+python cli.py export raw google.com --days 30 --out ./exports/google-raw-30d.json
+
+# JSON mode for automation
+python cli.py --json ops snapshot google.com --history-limit 200 --daily-limit 30
+```
+
+### CLI modes
+
+- `--mode local` (default): reads directly from local backend databases/files.
+- `--mode api`: calls a running backend API (default URL: `http://localhost:5001/api`).
+
+Monitor control commands are API-mode only:
+
+```bash
+python cli.py --mode api monitor status
+python cli.py --mode api monitor start
+python cli.py --mode api monitor stop
+```
+
+### Machine-friendly behavior
+
+- Use `--json` for stable automation output envelopes.
+- Use `--fail-on-empty` when empty results should fail pipelines.
+- Exit codes are deterministic (`0` success, non-zero for validation/API/transport/runtime errors).
+
 ## Configuration Notes
 
 - Service list is defined in `services.json` (root).
@@ -123,6 +177,9 @@ For backend architecture, full endpoint docs, aggregation behavior, and operatio
 
 For frontend coloring logic and notes, see:
 - [frontend/README.md](frontend/README.md)
+
+For AI-agent and automation workflows, see:
+- [skills.md](skills.md)
 
 ## License
 

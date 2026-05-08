@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import sqlite3
-from typing import Final
+from contextlib import contextmanager
+from typing import Final, Iterator
 
 from app.db import SQLITE_BUSY_TIMEOUT_MS, SQLITE_TIMEOUT_SECONDS
 
@@ -63,13 +64,21 @@ DAILY_INDEX_SQL: Final[tuple[str, ...]] = (
 )
 
 
-def get_daily_connection(db_path: str, *, with_row_factory: bool = False) -> sqlite3.Connection:
+@contextmanager
+def get_daily_connection(
+    db_path: str,
+    *,
+    with_row_factory: bool = False,
+) -> Iterator[sqlite3.Connection]:
     """Create a SQLite connection for the daily aggregate database."""
     connection = sqlite3.connect(db_path, timeout=SQLITE_TIMEOUT_SECONDS)
     connection.execute(f"PRAGMA busy_timeout = {SQLITE_BUSY_TIMEOUT_MS}")
     if with_row_factory:
         connection.row_factory = sqlite3.Row
-    return connection
+    try:
+        yield connection
+    finally:
+        connection.close()
 
 
 def init_daily_db(db_path: str) -> None:

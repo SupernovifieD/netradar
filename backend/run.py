@@ -24,6 +24,7 @@ def print_startup_banner() -> None:
     print("  GET  /api/daily/services               - Daily summaries for all services")
     print("  POST /api/monitor/start                - Start monitoring")
     print("  POST /api/monitor/stop                 - Stop monitoring")
+    print("  GET  /api/monitor/status               - Monitor runtime state")
     print("  GET  /api/health                       - Health check\n")
 
 

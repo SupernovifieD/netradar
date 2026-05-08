@@ -7,7 +7,8 @@ database concerns stay out of the Flask app factory and route modules.
 from __future__ import annotations
 
 import sqlite3
-from typing import Final
+from contextlib import contextmanager
+from typing import Final, Iterator
 
 SQLITE_TIMEOUT_SECONDS: Final[float] = 30.0
 SQLITE_BUSY_TIMEOUT_MS: Final[int] = 30_000
@@ -38,15 +39,20 @@ INDEX_SQL: Final[tuple[str, str]] = (
 )
 
 
-def get_connection(db_path: str, *, with_row_factory: bool = False) -> sqlite3.Connection:
+@contextmanager
+def get_connection(
+    db_path: str,
+    *,
+    with_row_factory: bool = False,
+) -> Iterator[sqlite3.Connection]:
     """Create a SQLite connection with optional dictionary-style row support.
 
     Args:
         db_path: Absolute or relative path to the SQLite database file.
         with_row_factory: If ``True``, returned rows behave like mappings.
 
-    Returns:
-        Configured SQLite connection.
+    Yields:
+        Configured SQLite connection that is always closed after use.
     """
     connection = sqlite3.connect(db_path, timeout=SQLITE_TIMEOUT_SECONDS)
 
@@ -55,7 +61,10 @@ def get_connection(db_path: str, *, with_row_factory: bool = False) -> sqlite3.C
 
     if with_row_factory:
         connection.row_factory = sqlite3.Row
-    return connection
+    try:
+        yield connection
+    finally:
+        connection.close()
 
 
 def init_db(db_path: str) -> None:

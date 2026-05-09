@@ -31,6 +31,8 @@ Pre-release notes for the next version after `0.1.0`.
   - screen now refreshes once on entry, then continues on the normal interval
   - manual refresh remains available any time
 - Removed leftover unused time-marker label rendering line in detail bucket section.
+- Frontend outage badge logic now triggers only when the latest 4 buckets are red.
+  If the newest bucket is not red, outage is not shown.
 
 ## [0.1.0] - 2026-05-08
 

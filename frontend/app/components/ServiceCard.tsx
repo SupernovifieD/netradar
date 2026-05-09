@@ -14,23 +14,16 @@ export default function ServiceCard({
   buckets: { start: string; end: string; color: string }[];
   showMeta?: boolean;
 }) {
-  function hasConsecutiveReds(
+  function hasLatestReds(
     bucketList: { start: string; end: string; color: string }[],
     limit: number
   ): boolean {
-    let count = 0;
-    for (const bucket of bucketList) {
-      if (bucket.color === "red") {
-        count += 1;
-        if (count >= limit) return true;
-      } else {
-        count = 0;
-      }
-    }
-    return false;
+    if (bucketList.length < limit) return false;
+    const latestBuckets = bucketList.slice(-limit);
+    return latestBuckets.every((bucket) => bucket.color === "red");
   }
 
-  const manyReds = hasConsecutiveReds(buckets, 4);
+  const manyReds = hasLatestReds(buckets, 4);
 
   return (
     <div

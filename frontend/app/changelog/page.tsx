@@ -49,6 +49,10 @@ export default function ChangelogPage() {
             manual refresh is still available.
           </li>
           <li>Removed leftover unused time-marker label rendering line in detail buckets.</li>
+          <li>
+            Frontend outage badge logic now triggers only when the latest 4 buckets are red. If
+            the newest bucket is not red, outage is not shown.
+          </li>
         </ul>
 
         <h3>v0.1.0</h3>

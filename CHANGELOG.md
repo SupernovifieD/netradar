@@ -44,6 +44,8 @@ Pre-release notes for the next version after `0.1.0`.
 - Service-page calendar now distinguishes future days from no-data days:
   - future days use dark gray
   - no-data historical days use pale gray
+- Suppressed noisy urllib3 `InsecureRequestWarning` entries emitted during
+  HTTPS reachability probes with certificate verification disabled.
 
 ## [0.1.0] - 2026-05-08
 

@@ -73,6 +73,10 @@ export default function ChangelogPage() {
             Service-page calendar now distinguishes future days from no-data days: future days use
             dark gray, while no-data historical days use pale gray.
           </li>
+          <li>
+            Suppressed noisy urllib3 <code>InsecureRequestWarning</code> entries emitted during
+            HTTPS reachability probes with certificate verification disabled.
+          </li>
         </ul>
 
         <h3>v0.1.0</h3>

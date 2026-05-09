@@ -12,6 +12,12 @@ from typing import Final
 
 import requests
 from requests.exceptions import RequestException
+from urllib3.exceptions import InsecureRequestWarning
+import urllib3
+
+# NetRadar intentionally probes some HTTPS targets with certificate verification
+# disabled for reachability checks, which emits noisy urllib3 warnings.
+urllib3.disable_warnings(InsecureRequestWarning)
 
 DNS_TIMEOUT_SECONDS: Final[int] = 2
 HTTP_TIMEOUT_SECONDS: Final[int] = 2

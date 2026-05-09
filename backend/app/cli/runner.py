@@ -7,7 +7,7 @@ from argparse import Namespace
 from pathlib import Path
 from typing import Any
 
-from app.cli.errors import CLIError, EXIT_EMPTY, EXIT_UNSUPPORTED_MODE
+from app.cli.errors import CLIError, EXIT_EMPTY, EXIT_UNSUPPORTED_MODE, EXIT_VALIDATION
 from app.cli.output import is_empty_result
 
 
@@ -30,11 +30,56 @@ def execute_command(args: Namespace, transport: Any) -> tuple[Any, dict[str, Any
             exit_code=EXIT_UNSUPPORTED_MODE,
             details={"mode": args.mode, "command": command},
         )
+    if command in {"services.add", "services.remove", "services.update"} and args.mode != "local":
+        raise CLIError(
+            code="UNSUPPORTED_MODE",
+            message=f"{command} is supported only in local mode",
+            exit_code=EXIT_UNSUPPORTED_MODE,
+            details={"mode": args.mode, "command": command},
+        )
 
     if command == "health":
         data = transport.health()
     elif command == "services.list":
         data = transport.services_list(search=args.search, group=args.group, category=args.category)
+    elif command == "services.add":
+        data = transport.services_add(
+            domain=args.domain,
+            name=args.name,
+            group=args.group,
+            category=args.category,
+            enabled=args.enabled,
+            interval_seconds=args.interval_seconds,
+            jitter_seconds=args.jitter_seconds,
+            max_backoff_seconds=args.max_backoff_seconds,
+            monitoring_json=args.monitoring_json,
+        )
+        meta["domain"] = args.domain
+    elif command == "services.remove":
+        if not args.yes:
+            raise CLIError(
+                code="CONFIRMATION_REQUIRED",
+                message="services remove requires --yes confirmation",
+                exit_code=EXIT_VALIDATION,
+                details={"domain": args.domain},
+            )
+        data = transport.services_remove(domain=args.domain, confirm=args.yes)
+        meta["domain"] = args.domain
+    elif command == "services.update":
+        data = transport.services_update(
+            domain=args.domain,
+            new_domain=args.new_domain,
+            name=args.name,
+            group=args.group,
+            category=args.category,
+            enabled=args.enabled,
+            interval_seconds=args.interval_seconds,
+            jitter_seconds=args.jitter_seconds,
+            max_backoff_seconds=args.max_backoff_seconds,
+            monitoring_json=args.monitoring_json,
+            clear_monitoring=args.clear_monitoring,
+        )
+        meta["domain"] = args.domain
     elif command == "status.current":
         data = transport.status_current()
     elif command == "history.recent":

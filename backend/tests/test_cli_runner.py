@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from app.cli.errors import CLIError, EXIT_EMPTY, EXIT_UNSUPPORTED_MODE
+from app.cli.errors import CLIError, EXIT_EMPTY, EXIT_UNSUPPORTED_MODE, EXIT_VALIDATION
 from app.cli.parser import build_parser
 from app.cli.runner import execute_command
 
@@ -30,6 +30,41 @@ class FakeTransport:
         if limit == 0:
             return []
         return [{"id": 1, "service": "google.com", "status": "UP"}]
+
+    def services_add(
+        self,
+        *,
+        domain: str,
+        name: str,
+        group: str,
+        category: str,
+        enabled,
+        interval_seconds,
+        jitter_seconds,
+        max_backoff_seconds,
+        monitoring_json,
+    ):
+        return {"message": "service added", "service": {"domain": domain, "name": name}}
+
+    def services_remove(self, *, domain: str, confirm: bool):
+        return {"message": "service removed", "service": domain}
+
+    def services_update(
+        self,
+        *,
+        domain: str,
+        new_domain,
+        name,
+        group,
+        category,
+        enabled,
+        interval_seconds,
+        jitter_seconds,
+        max_backoff_seconds,
+        monitoring_json,
+        clear_monitoring,
+    ):
+        return {"message": "service updated", "service": {"domain": new_domain or domain}}
 
     def export_raw(self, service: str, *, days: int):
         return {
@@ -76,6 +111,32 @@ class CliRunnerTests(unittest.TestCase):
             self.assertTrue(out_path.exists())
             self.assertEqual(meta["output_file"]["records"], 1)
             self.assertEqual(data["service"], "google.com")
+
+    def test_services_mutation_commands_are_local_mode_only(self) -> None:
+        args = self.parser.parse_args(
+            [
+                "--mode",
+                "api",
+                "services",
+                "add",
+                "example.com",
+                "--name",
+                "Example",
+                "--group",
+                "International Service",
+                "--category",
+                "General Services",
+            ]
+        )
+        with self.assertRaises(CLIError) as context:
+            execute_command(args, self.transport)
+        self.assertEqual(context.exception.exit_code, EXIT_UNSUPPORTED_MODE)
+
+    def test_services_remove_requires_yes(self) -> None:
+        args = self.parser.parse_args(["services", "remove", "example.com"])
+        with self.assertRaises(CLIError) as context:
+            execute_command(args, self.transport)
+        self.assertEqual(context.exception.exit_code, EXIT_VALIDATION)
 
 
 if __name__ == "__main__":

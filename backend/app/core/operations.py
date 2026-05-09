@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -16,9 +17,10 @@ from app.daily_models import DailyServiceHistory
 from app.models import CheckResult
 from app.services.checker import check_service
 from app.services.monitor import ServiceMonitor
-from app.services_catalog import ServiceCatalog
+from app.services_catalog import ServiceCatalog, ServiceCatalogItem
 
 MAX_EXPORT_DAYS = 90
+_MONITORING_UNSET = object()
 
 
 class NetRadarOperations:
@@ -73,6 +75,202 @@ class NetRadarOperations:
             filtered.append(service)
 
         return filtered
+
+    def services_add(
+        self,
+        *,
+        domain: str,
+        name: str,
+        group: str,
+        category: str,
+        enabled: bool | None = None,
+        interval_seconds: int | None = None,
+        jitter_seconds: int | None = None,
+        max_backoff_seconds: int | None = None,
+        monitoring_json: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a new service entry in ``services.json``."""
+        normalized_domain = self._normalize_domain(domain)
+        normalized_name = self._normalize_label(name=name, field_name="name")
+        normalized_group = self._normalize_label(name=group, field_name="group")
+        normalized_category = self._normalize_label(name=category, field_name="category")
+        monitoring = self._build_monitoring_payload(
+            enabled=enabled,
+            interval_seconds=interval_seconds,
+            jitter_seconds=jitter_seconds,
+            max_backoff_seconds=max_backoff_seconds,
+            monitoring_json=monitoring_json,
+        )
+
+        item = ServiceCatalogItem(
+            domain=normalized_domain,
+            name=normalized_name,
+            group=normalized_group,
+            category=normalized_category,
+            monitoring=monitoring,
+        )
+        try:
+            self._service_catalog.add(item)
+        except ValueError as exc:
+            raise CoreError(
+                code="SERVICE_ALREADY_EXISTS",
+                message=str(exc),
+                details={"domain": normalized_domain},
+                http_status=400,
+                exit_code=3,
+            ) from exc
+        except Exception as exc:  # pragma: no cover - defensive IO surface
+            raise CoreError(
+                code="SERVICES_FILE_ERROR",
+                message="failed to add service",
+                details={"error": str(exc), "domain": normalized_domain},
+                http_status=500,
+                exit_code=5,
+            ) from exc
+
+        return {"message": "service added", "service": item.as_dict()}
+
+    def services_remove(self, *, domain: str, confirm: bool) -> dict[str, Any]:
+        """Remove one service entry by domain."""
+        normalized_domain = self._normalize_domain(domain)
+        if not confirm:
+            raise CoreError(
+                code="CONFIRMATION_REQUIRED",
+                message="services.remove requires --yes confirmation",
+                details={"domain": normalized_domain},
+                http_status=400,
+                exit_code=3,
+            )
+
+        try:
+            removed = self._service_catalog.remove_by_domain(normalized_domain)
+        except Exception as exc:  # pragma: no cover - defensive IO surface
+            raise CoreError(
+                code="SERVICES_FILE_ERROR",
+                message="failed to remove service",
+                details={"error": str(exc), "domain": normalized_domain},
+                http_status=500,
+                exit_code=5,
+            ) from exc
+
+        if not removed:
+            raise CoreError(
+                code="SERVICE_NOT_FOUND",
+                message=f"service not found: {normalized_domain}",
+                details={"domain": normalized_domain},
+                http_status=404,
+                exit_code=4,
+            )
+
+        return {"message": "service removed", "service": normalized_domain}
+
+    def services_update(
+        self,
+        *,
+        domain: str,
+        new_domain: str | None = None,
+        name: str | None = None,
+        group: str | None = None,
+        category: str | None = None,
+        enabled: bool | None = None,
+        interval_seconds: int | None = None,
+        jitter_seconds: int | None = None,
+        max_backoff_seconds: int | None = None,
+        monitoring_json: str | None = None,
+        clear_monitoring: bool = False,
+    ) -> dict[str, Any]:
+        """Update one service entry by domain."""
+        normalized_domain = self._normalize_domain(domain)
+        normalized_new_domain = self._normalize_domain(new_domain) if new_domain is not None else None
+        normalized_name = (
+            self._normalize_label(name=name, field_name="name") if name is not None else None
+        )
+        normalized_group = (
+            self._normalize_label(name=group, field_name="group") if group is not None else None
+        )
+        normalized_category = (
+            self._normalize_label(name=category, field_name="category")
+            if category is not None
+            else None
+        )
+
+        if clear_monitoring and any(
+            value is not None
+            for value in (enabled, interval_seconds, jitter_seconds, max_backoff_seconds, monitoring_json)
+        ):
+            raise CoreError(
+                code="INVALID_MONITORING_COMBINATION",
+                message="--clear-monitoring cannot be combined with monitoring update flags",
+                details={"domain": normalized_domain},
+                http_status=400,
+                exit_code=3,
+            )
+
+        monitoring_update: dict[str, Any] | None | object = _MONITORING_UNSET
+        if clear_monitoring:
+            monitoring_update = None
+        else:
+            monitoring_payload = self._build_monitoring_payload(
+                enabled=enabled,
+                interval_seconds=interval_seconds,
+                jitter_seconds=jitter_seconds,
+                max_backoff_seconds=max_backoff_seconds,
+                monitoring_json=monitoring_json,
+            )
+            if monitoring_payload is not None:
+                monitoring_update = monitoring_payload
+
+        if (
+            normalized_new_domain is None
+            and normalized_name is None
+            and normalized_group is None
+            and normalized_category is None
+            and monitoring_update is _MONITORING_UNSET
+        ):
+            raise CoreError(
+                code="NO_UPDATES_PROVIDED",
+                message="no update fields provided",
+                details={"domain": normalized_domain},
+                http_status=400,
+                exit_code=3,
+            )
+
+        try:
+            updated = self._service_catalog.update_by_domain(
+                normalized_domain,
+                new_domain=normalized_new_domain,
+                name=normalized_name,
+                group=normalized_group,
+                category=normalized_category,
+                monitoring=monitoring_update,
+            )
+        except ValueError as exc:
+            raise CoreError(
+                code="SERVICE_UPDATE_CONFLICT",
+                message=str(exc),
+                details={"domain": normalized_domain, "new_domain": normalized_new_domain},
+                http_status=400,
+                exit_code=3,
+            ) from exc
+        except Exception as exc:  # pragma: no cover - defensive IO surface
+            raise CoreError(
+                code="SERVICES_FILE_ERROR",
+                message="failed to update service",
+                details={"error": str(exc), "domain": normalized_domain},
+                http_status=500,
+                exit_code=5,
+            ) from exc
+
+        if updated is None:
+            raise CoreError(
+                code="SERVICE_NOT_FOUND",
+                message=f"service not found: {normalized_domain}",
+                details={"domain": normalized_domain},
+                http_status=404,
+                exit_code=4,
+            )
+
+        return {"message": "service updated", "service": updated.as_dict()}
 
     def status_current(self) -> list[dict[str, Any]]:
         """Return latest status rows for all services."""
@@ -299,6 +497,109 @@ class NetRadarOperations:
                 exit_code=3,
             )
         return days
+
+    def _build_monitoring_payload(
+        self,
+        *,
+        enabled: bool | None,
+        interval_seconds: int | None,
+        jitter_seconds: int | None,
+        max_backoff_seconds: int | None,
+        monitoring_json: str | None,
+    ) -> dict[str, Any] | None:
+        payload: dict[str, Any] = {}
+
+        if monitoring_json is not None:
+            try:
+                parsed = json.loads(monitoring_json)
+            except json.JSONDecodeError as exc:
+                raise CoreError(
+                    code="INVALID_MONITORING_JSON",
+                    message="monitoring_json must be valid JSON",
+                    details={"error": str(exc)},
+                    http_status=400,
+                    exit_code=3,
+                ) from exc
+            if not isinstance(parsed, dict):
+                raise CoreError(
+                    code="INVALID_MONITORING_JSON",
+                    message="monitoring_json must decode to an object",
+                    details={"monitoring_json": monitoring_json},
+                    http_status=400,
+                    exit_code=3,
+                )
+            payload.update(parsed)
+
+        if enabled is not None:
+            payload["enabled"] = enabled
+        if interval_seconds is not None:
+            if interval_seconds < 1:
+                raise CoreError(
+                    code="INVALID_INTERVAL_SECONDS",
+                    message="interval_seconds must be >= 1",
+                    details={"interval_seconds": interval_seconds},
+                    http_status=400,
+                    exit_code=3,
+                )
+            payload["interval_seconds"] = interval_seconds
+        if jitter_seconds is not None:
+            if jitter_seconds < 0:
+                raise CoreError(
+                    code="INVALID_JITTER_SECONDS",
+                    message="jitter_seconds must be >= 0",
+                    details={"jitter_seconds": jitter_seconds},
+                    http_status=400,
+                    exit_code=3,
+                )
+            payload["jitter_seconds"] = jitter_seconds
+        if max_backoff_seconds is not None:
+            if max_backoff_seconds < 1:
+                raise CoreError(
+                    code="INVALID_MAX_BACKOFF_SECONDS",
+                    message="max_backoff_seconds must be >= 1",
+                    details={"max_backoff_seconds": max_backoff_seconds},
+                    http_status=400,
+                    exit_code=3,
+                )
+            payload["max_backoff_seconds"] = max_backoff_seconds
+
+        if not payload:
+            return None
+        return payload
+
+    @staticmethod
+    def _normalize_domain(domain: str | None) -> str:
+        value = (domain or "").strip()
+        if not value:
+            raise CoreError(
+                code="INVALID_DOMAIN",
+                message="domain is required",
+                details={"domain": domain},
+                http_status=400,
+                exit_code=3,
+            )
+        if any(ch.isspace() for ch in value):
+            raise CoreError(
+                code="INVALID_DOMAIN",
+                message="domain must not contain whitespace",
+                details={"domain": value},
+                http_status=400,
+                exit_code=3,
+            )
+        return value
+
+    @staticmethod
+    def _normalize_label(*, name: str | None, field_name: str) -> str:
+        value = (name or "").strip()
+        if not value:
+            raise CoreError(
+                code="INVALID_SERVICE_FIELD",
+                message=f"{field_name} must be a non-empty string",
+                details={"field": field_name, "value": name},
+                http_status=400,
+                exit_code=3,
+            )
+        return value
 
     @staticmethod
     def _attach_intervals(summaries: list[dict[str, Any]]) -> list[dict[str, Any]]:

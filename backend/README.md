@@ -275,6 +275,9 @@ python cli.py --help
 
 - `health`
 - `services list [--search TEXT] [--group TEXT] [--category TEXT]`
+- `services add <domain> --name <text> --group <text> --category <text> [--enabled true|false] [--interval-seconds N] [--jitter-seconds N] [--max-backoff-seconds N] [--monitoring-json JSON]` (local mode only)
+- `services update <domain> [--new-domain <domain>] [--name <text>] [--group <text>] [--category <text>] [--enabled true|false] [--interval-seconds N] [--jitter-seconds N] [--max-backoff-seconds N] [--monitoring-json JSON] [--clear-monitoring]` (local mode only)
+- `services remove <domain> --yes` (local mode only)
 - `status current`
 - `history recent [--limit N]`
 - `history 24h`
@@ -287,6 +290,12 @@ python cli.py --help
 - `probe service <domain>` (local mode only)
 - `ops snapshot <domain> [--history-limit N] [--daily-limit N]`
 - `ops gate <domain> [--days N] [--min-uptime PCT] [--max-p95-latency MS]`
+
+Notes:
+
+- `services remove` requires `--yes` confirmation.
+- `services update` patches only provided `monitoring` keys and keeps unspecified keys unchanged.
+- `--clear-monitoring` cannot be combined with other monitoring update flags.
 
 ### JSON envelope contract (`--json`)
 

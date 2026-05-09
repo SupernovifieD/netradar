@@ -144,12 +144,22 @@ python cli.py export raw google.com --days 30 --out ./exports/google-raw-30d.jso
 
 # JSON mode for automation
 python cli.py --json ops snapshot google.com --history-limit 200 --daily-limit 30
+
+# Add a new service to services.json (local mode only)
+python cli.py services add example.com --name "Example" --group "International Service" --category "General Services"
+
+# Update an existing service (local mode only)
+python cli.py services update example.com --name "Example (Primary)" --interval-seconds 120
+
+# Remove a service (local mode only, requires confirmation flag)
+python cli.py services remove example.com --yes
 ```
 
 ### CLI modes
 
 - `--mode local` (default): reads directly from local backend databases/files.
 - `--mode api`: calls a running backend API (default URL: `http://localhost:5001/api`).
+- `services add|update|remove` are local-mode only because they edit local `services.json`.
 
 Monitor control commands are API-mode only:
 

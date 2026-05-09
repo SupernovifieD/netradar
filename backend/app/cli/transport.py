@@ -36,6 +36,67 @@ class LocalTransport:
             lambda: self._operations.services_list(search=search, group=group, category=category)
         )
 
+    def services_add(
+        self,
+        *,
+        domain: str,
+        name: str,
+        group: str,
+        category: str,
+        enabled: bool | None,
+        interval_seconds: int | None,
+        jitter_seconds: int | None,
+        max_backoff_seconds: int | None,
+        monitoring_json: str | None,
+    ) -> dict[str, Any]:
+        return self._safe(
+            lambda: self._operations.services_add(
+                domain=domain,
+                name=name,
+                group=group,
+                category=category,
+                enabled=enabled,
+                interval_seconds=interval_seconds,
+                jitter_seconds=jitter_seconds,
+                max_backoff_seconds=max_backoff_seconds,
+                monitoring_json=monitoring_json,
+            )
+        )
+
+    def services_remove(self, *, domain: str, confirm: bool) -> dict[str, Any]:
+        return self._safe(lambda: self._operations.services_remove(domain=domain, confirm=confirm))
+
+    def services_update(
+        self,
+        *,
+        domain: str,
+        new_domain: str | None,
+        name: str | None,
+        group: str | None,
+        category: str | None,
+        enabled: bool | None,
+        interval_seconds: int | None,
+        jitter_seconds: int | None,
+        max_backoff_seconds: int | None,
+        monitoring_json: str | None,
+        clear_monitoring: bool,
+    ) -> dict[str, Any]:
+        return self._safe(
+            lambda: self._operations.services_update(
+                domain=domain,
+                new_domain=new_domain,
+                name=name,
+                group=group,
+                category=category,
+                enabled=enabled,
+                interval_seconds=interval_seconds,
+                jitter_seconds=jitter_seconds,
+                max_backoff_seconds=max_backoff_seconds,
+                monitoring_json=monitoring_json,
+                clear_monitoring=clear_monitoring,
+            )
+        )
+
     def status_current(self) -> list[dict[str, Any]]:
         return self._safe(self._operations.status_current)
 
@@ -172,6 +233,56 @@ class ApiTransport:
             },
         )
         return payload.get("data", [])
+
+    def services_add(
+        self,
+        *,
+        domain: str,
+        name: str,
+        group: str,
+        category: str,
+        enabled: bool | None,
+        interval_seconds: int | None,
+        jitter_seconds: int | None,
+        max_backoff_seconds: int | None,
+        monitoring_json: str | None,
+    ) -> dict[str, Any]:
+        raise CLIError(
+            code="UNSUPPORTED_IN_API_MODE",
+            message="services.add is only available in local mode",
+            exit_code=8,
+            details={"mode": "api"},
+        )
+
+    def services_remove(self, *, domain: str, confirm: bool) -> dict[str, Any]:
+        raise CLIError(
+            code="UNSUPPORTED_IN_API_MODE",
+            message="services.remove is only available in local mode",
+            exit_code=8,
+            details={"mode": "api"},
+        )
+
+    def services_update(
+        self,
+        *,
+        domain: str,
+        new_domain: str | None,
+        name: str | None,
+        group: str | None,
+        category: str | None,
+        enabled: bool | None,
+        interval_seconds: int | None,
+        jitter_seconds: int | None,
+        max_backoff_seconds: int | None,
+        monitoring_json: str | None,
+        clear_monitoring: bool,
+    ) -> dict[str, Any]:
+        raise CLIError(
+            code="UNSUPPORTED_IN_API_MODE",
+            message="services.update is only available in local mode",
+            exit_code=8,
+            details={"mode": "api"},
+        )
 
     def status_current(self) -> list[dict[str, Any]]:
         payload = self._get("/status")

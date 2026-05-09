@@ -115,6 +115,9 @@ def render_human(command: str, data: Any, meta: dict[str, Any]) -> str:
         rows = data if isinstance(data, list) else []
         return f"Services: {len(rows)}\n{render_table(rows, ['name', 'domain', 'group', 'category'])}"
 
+    if command in {"services.add", "services.update", "services.remove"}:
+        return dumps_pretty_json(data)
+
     if command == "status.current":
         rows = data if isinstance(data, list) else []
         columns = [

@@ -13,6 +13,44 @@ export default function ChangelogPage() {
       <div className="box simple-content">
         <h1>Changelog</h1>
 
+        <h3>Unreleased</h3>
+        <p>Pre-release notes for the next version after v0.1.0.</p>
+
+        <h4>Added</h4>
+        <ul>
+          <li>
+            CLI service catalog mutation commands in local mode:
+            <code>services add</code>, <code>services update</code>, and{" "}
+            <code>services remove --yes</code>.
+          </li>
+          <li>
+            Backend TUI detail-screen quit shortcut: <code>q</code> now exits directly from
+            service detail screen.
+          </li>
+        </ul>
+
+        <h4>Changed</h4>
+        <ul>
+          <li>
+            Backend TUI add-service modal is now a smaller, center-aligned panel with centered
+            action buttons.
+          </li>
+          <li>Backend TUI add-service panel background is now fully black for clarity.</li>
+        </ul>
+
+        <h4>Fixed</h4>
+        <ul>
+          <li>
+            Backend TUI detail-screen refresh behavior no longer triggers a near-immediate extra
+            auto-refresh after entering/switching services.
+          </li>
+          <li>
+            Detail screen now refreshes once on entry, then continues on the normal interval;
+            manual refresh is still available.
+          </li>
+          <li>Removed leftover unused time-marker label rendering line in detail buckets.</li>
+        </ul>
+
         <h3>v0.1.0</h3>
         <p>2026-05-08</p>
         <p>Initial public release of NetRadar.</p>

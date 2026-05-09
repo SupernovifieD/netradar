@@ -4,6 +4,34 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+Pre-release notes for the next version after `0.1.0`.
+
+### Added
+
+- CLI service catalog mutation commands (local mode):
+  - `services add` to add a new service entry to `services.json`
+  - `services update` to modify domain/name/group/category/monitoring fields
+  - `services remove --yes` to remove a service with explicit confirmation
+- Backend TUI detail-screen quit shortcut:
+  - `q` now exits directly from service detail screen (no need to go back first).
+
+### Changed
+
+- Backend TUI add-service modal presentation:
+  - modal panel is now a smaller, center-aligned box
+  - action buttons (`Cancel` / `Save`) are centered
+  - add-service panel background is fully black for visual clarity
+
+### Fixed
+
+- Backend TUI detail-screen refresh cadence:
+  - removed near-immediate extra auto-refresh on screen entry/switch
+  - screen now refreshes once on entry, then continues on the normal interval
+  - manual refresh remains available any time
+- Removed leftover unused time-marker label rendering line in detail bucket section.
+
 ## [0.1.0] - 2026-05-08
 
 Initial public release of NetRadar.

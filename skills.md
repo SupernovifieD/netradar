@@ -30,6 +30,9 @@ Mode behavior:
 
 - `health`
 - `services list [--search TEXT] [--group TEXT] [--category TEXT]`
+- `services add <domain> --name <text> --group <text> --category <text> [monitoring flags]` (local mode only)
+- `services update <domain> [--new-domain <domain>] [--name <text>] [--group <text>] [--category <text>] [monitoring flags] [--clear-monitoring]` (local mode only)
+- `services remove <domain> --yes` (local mode only)
 - `status current`
 - `history recent [--limit N]`
 - `history 24h`
@@ -42,6 +45,14 @@ Mode behavior:
 - `probe service <domain>`
 - `ops snapshot <domain> [--history-limit N] [--daily-limit N]`
 - `ops gate <domain> [--days N] [--min-uptime PCT] [--max-p95-latency MS]`
+
+Monitoring flags for `services add/update`:
+
+- `--enabled true|false`
+- `--interval-seconds <int>`
+- `--jitter-seconds <int>`
+- `--max-backoff-seconds <int>`
+- `--monitoring-json '{"...": ...}'`
 
 ## 3) JSON Usage Pattern
 

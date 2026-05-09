@@ -5,6 +5,29 @@ from __future__ import annotations
 import argparse
 
 
+def _parse_bool(value: str) -> bool:
+    normalized = value.strip().lower()
+    if normalized in {"true", "1", "yes", "on"}:
+        return True
+    if normalized in {"false", "0", "no", "off"}:
+        return False
+    raise argparse.ArgumentTypeError("expected boolean value (true/false)")
+
+
+def _add_monitoring_options(
+    parser: argparse.ArgumentParser,
+    *,
+    include_clear_monitoring: bool,
+) -> None:
+    parser.add_argument("--enabled", type=_parse_bool)
+    parser.add_argument("--interval-seconds", type=int)
+    parser.add_argument("--jitter-seconds", type=int)
+    parser.add_argument("--max-backoff-seconds", type=int)
+    parser.add_argument("--monitoring-json")
+    if include_clear_monitoring:
+        parser.add_argument("--clear-monitoring", action="store_true")
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build CLI parser with full command taxonomy."""
     parser = argparse.ArgumentParser(
@@ -30,6 +53,37 @@ def build_parser() -> argparse.ArgumentParser:
     services_list.add_argument("--group")
     services_list.add_argument("--category")
     services_list.set_defaults(command_id="services.list")
+
+    services_add = services_sub.add_parser(
+        "add",
+        help="Add a service entry to services.json (local mode only).",
+    )
+    services_add.add_argument("domain")
+    services_add.add_argument("--name", required=True)
+    services_add.add_argument("--group", required=True)
+    services_add.add_argument("--category", required=True)
+    _add_monitoring_options(services_add, include_clear_monitoring=False)
+    services_add.set_defaults(command_id="services.add")
+
+    services_remove = services_sub.add_parser(
+        "remove",
+        help="Remove a service by domain (local mode only).",
+    )
+    services_remove.add_argument("domain")
+    services_remove.add_argument("--yes", action="store_true")
+    services_remove.set_defaults(command_id="services.remove")
+
+    services_update = services_sub.add_parser(
+        "update",
+        help="Update an existing service entry (local mode only).",
+    )
+    services_update.add_argument("domain")
+    services_update.add_argument("--new-domain")
+    services_update.add_argument("--name")
+    services_update.add_argument("--group")
+    services_update.add_argument("--category")
+    _add_monitoring_options(services_update, include_clear_monitoring=True)
+    services_update.set_defaults(command_id="services.update")
 
     status = root.add_parser("status", help="Current status views.")
     status_sub = status.add_subparsers(dest="status_command", required=True)

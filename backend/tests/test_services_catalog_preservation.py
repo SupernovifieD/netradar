@@ -54,6 +54,45 @@ class ServicesCatalogPreservationTests(unittest.TestCase):
             self.assertEqual(row["monitoring"]["interval_seconds"], 300)
             self.assertEqual(row["monitoring"]["max_backoff_seconds"], 600)
 
+    def test_update_preserves_extras_and_updates_monitoring(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            file_path = Path(tmp_dir) / "services.json"
+            file_path.write_text(
+                json.dumps(
+                    [
+                        {
+                            "domain": "example.com",
+                            "name": "Example",
+                            "group": "International Service",
+                            "category": "General Services",
+                            "monitoring": {
+                                "enabled": True,
+                                "interval_seconds": 300,
+                                "max_backoff_seconds": 600,
+                            },
+                            "note": "keep-me",
+                        }
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            catalog = ServiceCatalog(str(file_path))
+            updated = catalog.update_by_domain(
+                "example.com",
+                name="Example Updated",
+                monitoring={"interval_seconds": 120},
+            )
+            self.assertIsNotNone(updated)
+
+            saved = json.loads(file_path.read_text(encoding="utf-8"))
+            row = next(item for item in saved if item["domain"] == "example.com")
+            self.assertEqual(row["name"], "Example Updated")
+            self.assertEqual(row["note"], "keep-me")
+            self.assertEqual(row["monitoring"]["enabled"], True)
+            self.assertEqual(row["monitoring"]["interval_seconds"], 120)
+            self.assertEqual(row["monitoring"]["max_backoff_seconds"], 600)
+
 
 if __name__ == "__main__":
     unittest.main()

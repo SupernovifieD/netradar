@@ -53,6 +53,29 @@ class CliParserTests(unittest.TestCase):
         self.assertEqual(args.command_id, "monitor.runtime")
         self.assertEqual(args.mode, "api")
 
+    def test_services_add_parsing(self) -> None:
+        args = self.parser.parse_args(
+            [
+                "services",
+                "add",
+                "example.com",
+                "--name",
+                "Example",
+                "--group",
+                "International Service",
+                "--category",
+                "General Services",
+                "--enabled",
+                "true",
+                "--interval-seconds",
+                "120",
+            ]
+        )
+        self.assertEqual(args.command_id, "services.add")
+        self.assertEqual(args.domain, "example.com")
+        self.assertTrue(args.enabled)
+        self.assertEqual(args.interval_seconds, 120)
+
 
 if __name__ == "__main__":
     unittest.main()

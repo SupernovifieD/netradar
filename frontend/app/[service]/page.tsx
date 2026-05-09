@@ -75,6 +75,7 @@ function formatLatency(value: number | null): string {
 function toDailyStatusLabel(status: DailyServiceSummary["overall_status"]): string {
   if (status === "UP") return "Up";
   if (status === "DEGRADED") return "Degraded";
+  if (status === "NO_DATA") return "No data";
   return "Down";
 }
 

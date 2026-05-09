@@ -550,6 +550,11 @@ p a:hover {
 }
 
 .service-calendar-cell--nodata {
+  background: #d9d9d9;
+  color: #3f3f3f;
+}
+
+.service-calendar-cell--future {
   background: #252525;
   color: #9f9f9f;
 }
@@ -588,6 +593,14 @@ p a:hover {
 
 .service-calendar-dot--down {
   background: #e74c3c;
+}
+
+.service-calendar-dot--nodata {
+  background: #c7c7c7;
+}
+
+.service-calendar-dot--future {
+  background: #555;
 }
 
 /* ============================= */

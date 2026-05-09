@@ -1,6 +1,6 @@
 import { DailyServiceSummary } from "@/types/service";
 
-type StatusKey = "UP" | "DEGRADED" | "DOWN";
+type StatusKey = "UP" | "DEGRADED" | "DOWN" | "NO_DATA";
 
 interface CalendarCell {
   key: string;
@@ -8,6 +8,7 @@ interface CalendarCell {
   dayUtc: string;
   status: StatusKey | null;
   isToday: boolean;
+  isFuture: boolean;
 }
 
 const dayNumberFormatter = new Intl.DateTimeFormat("en-US", { day: "numeric" });
@@ -47,7 +48,8 @@ function buildCurrentMonthCalendar(
     if (
       summary.overall_status === "UP" ||
       summary.overall_status === "DEGRADED" ||
-      summary.overall_status === "DOWN"
+      summary.overall_status === "DOWN" ||
+      summary.overall_status === "NO_DATA"
     ) {
       summaryStatusByDay.set(summary.day_utc, summary.overall_status);
     }
@@ -66,6 +68,7 @@ function buildCurrentMonthCalendar(
       dayUtc,
       status: summaryStatusByDay.get(dayUtc) ?? null,
       isToday: isSameDay(day, today),
+      isFuture: day > today,
     });
   }
 
@@ -104,13 +107,17 @@ export default function ServiceStatusCalendar({ summaries }: { summaries: DailyS
           }
 
           const statusClass =
-            cell.status === "UP"
-              ? "service-calendar-cell--up"
-              : cell.status === "DEGRADED"
-                ? "service-calendar-cell--degraded"
-                : cell.status === "DOWN"
-                  ? "service-calendar-cell--down"
-                  : "service-calendar-cell--nodata";
+            cell.isFuture
+              ? "service-calendar-cell--future"
+              : cell.status === "UP"
+                ? "service-calendar-cell--up"
+                : cell.status === "DEGRADED"
+                  ? "service-calendar-cell--degraded"
+                  : cell.status === "DOWN"
+                    ? "service-calendar-cell--down"
+                    : cell.status === "NO_DATA"
+                      ? "service-calendar-cell--nodata"
+                    : "service-calendar-cell--nodata";
 
           return (
             <div
@@ -136,6 +143,10 @@ export default function ServiceStatusCalendar({ summaries }: { summaries: DailyS
         <div className="service-calendar-legend-item">
           <span className="service-calendar-dot service-calendar-dot--down" />
           Outage day
+        </div>
+        <div className="service-calendar-legend-item">
+          <span className="service-calendar-dot service-calendar-dot--nodata" />
+          No data day
         </div>
       </div>
     </div>

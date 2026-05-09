@@ -48,7 +48,7 @@ export interface DailyServiceInterval {
 export interface DailyServiceSummary {
   service: string;
   day_utc: string;
-  overall_status: "UP" | "DEGRADED" | "DOWN";
+  overall_status: "UP" | "DEGRADED" | "DOWN" | "NO_DATA";
   uptime_rate_pct: number;
   uptime_seconds: number;
   downtime_seconds: number;

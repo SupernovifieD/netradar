@@ -25,6 +25,10 @@ Pre-release notes for the next version after `0.1.0`.
   - add-service panel background is fully black for visual clarity
 - Header description now explicitly explains service timeline direction:
   oldest on the left, newest on the right.
+- Daily aggregate status policy updated:
+  - `DEGRADED` now covers `20%` to `<95%` uptime
+  - `NO_DATA` is used when a closed day has zero observed seconds
+  - daily DB init now migrates legacy `daily_service_stats` constraints to allow `NO_DATA`
 
 ### Fixed
 
@@ -37,6 +41,9 @@ Pre-release notes for the next version after `0.1.0`.
   If the newest bucket is not red, outage is not shown.
 - Frontend service-card status ribbons now render buckets and time markers in matching
   chronological order (oldest on left, newest on right).
+- Service-page calendar now distinguishes future days from no-data days:
+  - future days use dark gray
+  - no-data historical days use pale gray
 
 ## [0.1.0] - 2026-05-08
 

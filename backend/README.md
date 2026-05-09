@@ -56,7 +56,8 @@ Daily classification policy:
 
 - UTC day boundary.
 - Closed days only (`day < current_utc_day`).
-- Thresholds: `UP >= 95`, `DEGRADED >= 80`, else `DOWN`.
+- Thresholds: `UP >= 95`, `DEGRADED >= 20`, else `DOWN`.
+- If `observed_seconds == 0`, daily `overall_status` is `NO_DATA`.
 - Existing closed-day rows are not recomputed.
 - Backfill window: last 90 closed days.
 

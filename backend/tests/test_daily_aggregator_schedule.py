@@ -60,10 +60,35 @@ class DailyAggregatorScheduleTests(unittest.TestCase):
         self.assertEqual(summary["downtime_seconds"], 0)
         self.assertEqual(summary["no_data_seconds"], 86400)
         self.assertEqual(summary["coverage_rate_pct"], 0.0)
-        self.assertEqual(summary["overall_status"], "DOWN")
+        self.assertEqual(summary["overall_status"], "NO_DATA")
         self.assertTrue(intervals)
         self.assertEqual(intervals[0]["interval_type"], "NO_DATA")
         self.assertEqual(intervals[0]["duration_seconds"], 86400)
+
+    def test_low_uptime_day_is_degraded_with_new_threshold(self) -> None:
+        rows = []
+        current = self.day_start
+        slot_index = 0
+        while current < self.day_start + timedelta(days=1):
+            rows.append(
+                {
+                    "service": "example.com",
+                    "date": current.strftime("%Y-%m-%d"),
+                    "time": current.strftime("%H:%M:%S"),
+                    "status": "UP" if slot_index < 72 else "DOWN",
+                    "latency": "30.0",
+                }
+            )
+            current += timedelta(seconds=300)
+            slot_index += 1
+
+        summary, _intervals = self.aggregator._build_service_day_summary(  # noqa: SLF001
+            policy=self.policy_5m,
+            day_start_utc=self.day_start,
+            service_rows=rows,
+        )
+        self.assertEqual(summary["uptime_rate_pct"], 25.0)
+        self.assertEqual(summary["overall_status"], "DEGRADED")
 
 
 if __name__ == "__main__":

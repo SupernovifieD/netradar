@@ -89,7 +89,7 @@ Mapping uses backend daily aggregate status (`overall_status`):
 - `UP` → `.service-calendar-cell--up`
 - `DEGRADED` → `.service-calendar-cell--degraded`
 - `DOWN` → `.service-calendar-cell--down`
-- missing day data → `.service-calendar-cell--nodata`
+- `NO_DATA` (or missing day summary) → `.service-calendar-cell--nodata` (pale gray)
 
 ### 5) Chart line colors
 

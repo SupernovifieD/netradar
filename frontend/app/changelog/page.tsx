@@ -40,6 +40,14 @@ export default function ChangelogPage() {
             Header description now explicitly explains service timeline direction: oldest on the
             left, newest on the right.
           </li>
+          <li>
+            Daily aggregate status policy updated: <code>DEGRADED</code> now covers 20% to &lt;95%
+            uptime, and <code>NO_DATA</code> is used when a closed day has zero observed seconds.
+          </li>
+          <li>
+            Daily DB initialization now migrates legacy <code>daily_service_stats</code>{" "}
+            constraints to allow <code>NO_DATA</code>.
+          </li>
         </ul>
 
         <h4>Fixed</h4>
@@ -60,6 +68,10 @@ export default function ChangelogPage() {
           <li>
             Frontend service-card status ribbons now render buckets and time markers in matching
             chronological order (oldest on left, newest on right).
+          </li>
+          <li>
+            Service-page calendar now distinguishes future days from no-data days: future days use
+            dark gray, while no-data historical days use pale gray.
           </li>
         </ul>
 

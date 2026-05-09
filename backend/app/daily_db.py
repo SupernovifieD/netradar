@@ -12,7 +12,7 @@ DAILY_STATS_TABLE_SQL: Final[str] = """
     CREATE TABLE IF NOT EXISTS daily_service_stats (
         service TEXT NOT NULL,
         day_utc TEXT NOT NULL,
-        overall_status TEXT NOT NULL CHECK (overall_status IN ('UP', 'DEGRADED', 'DOWN')),
+        overall_status TEXT NOT NULL CHECK (overall_status IN ('UP', 'DEGRADED', 'DOWN', 'NO_DATA')),
         uptime_rate_pct REAL NOT NULL,
         uptime_seconds INTEGER NOT NULL,
         downtime_seconds INTEGER NOT NULL,
@@ -63,6 +63,31 @@ DAILY_INDEX_SQL: Final[tuple[str, ...]] = (
     """,
 )
 
+DAILY_STATS_COPY_COLUMNS: Final[tuple[str, ...]] = (
+    "service",
+    "day_utc",
+    "overall_status",
+    "uptime_rate_pct",
+    "uptime_seconds",
+    "downtime_seconds",
+    "no_data_seconds",
+    "expected_seconds",
+    "observed_seconds",
+    "coverage_rate_pct",
+    "checks_total",
+    "checks_up",
+    "checks_down",
+    "checks_no_data",
+    "avg_latency_ms",
+    "min_latency_ms",
+    "max_latency_ms",
+    "p95_latency_ms",
+    "first_check_at_utc",
+    "last_check_at_utc",
+    "computed_at_utc",
+    "algo_version",
+)
+
 
 @contextmanager
 def get_daily_connection(
@@ -90,7 +115,39 @@ def init_daily_db(db_path: str) -> None:
         cursor.execute("PRAGMA synchronous=NORMAL")
 
         cursor.execute(DAILY_STATS_TABLE_SQL)
+        _ensure_daily_stats_supports_no_data(cursor)
         cursor.execute(DAILY_INTERVALS_TABLE_SQL)
         for statement in DAILY_INDEX_SQL:
             cursor.execute(statement)
         connection.commit()
+
+
+def _ensure_daily_stats_supports_no_data(cursor: sqlite3.Cursor) -> None:
+    """Migrate legacy daily stats table to allow ``overall_status='NO_DATA'``."""
+    cursor.execute(
+        """
+        SELECT sql
+        FROM sqlite_master
+        WHERE type = 'table' AND name = 'daily_service_stats'
+        """
+    )
+    row = cursor.fetchone()
+    if not row:
+        return
+
+    create_sql = (row[0] or "").upper()
+    if "'NO_DATA'" in create_sql:
+        return
+
+    cursor.execute("ALTER TABLE daily_service_stats RENAME TO daily_service_stats_legacy")
+    cursor.execute(DAILY_STATS_TABLE_SQL)
+
+    columns = ", ".join(DAILY_STATS_COPY_COLUMNS)
+    cursor.execute(
+        f"""
+        INSERT INTO daily_service_stats ({columns})
+        SELECT {columns}
+        FROM daily_service_stats_legacy
+        """
+    )
+    cursor.execute("DROP TABLE daily_service_stats_legacy")

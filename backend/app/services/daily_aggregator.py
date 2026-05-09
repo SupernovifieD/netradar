@@ -14,7 +14,7 @@ from config import Config
 
 AGGREGATION_ALGO_VERSION = 1
 STATUS_UP_THRESHOLD = 95.0
-STATUS_DEGRADED_THRESHOLD = 80.0
+STATUS_DEGRADED_THRESHOLD = 20.0
 
 
 class DailyAggregator:
@@ -146,7 +146,10 @@ class DailyAggregator:
         summary: DailySummaryRow = {
             "service": service,
             "day_utc": day_start_utc.date().isoformat(),
-            "overall_status": self._classify_day_status(uptime_rate_pct),
+            "overall_status": self._classify_day_status(
+                uptime_rate_pct=uptime_rate_pct,
+                observed_seconds=observed_seconds,
+            ),
             "uptime_rate_pct": round(uptime_rate_pct, 6),
             "uptime_seconds": uptime_seconds,
             "downtime_seconds": downtime_seconds,
@@ -242,8 +245,10 @@ class DailyAggregator:
 
         return bounds
 
-    def _classify_day_status(self, uptime_rate_pct: float) -> str:
-        """Return UP/DEGRADED/DOWN classification from uptime percentage."""
+    def _classify_day_status(self, *, uptime_rate_pct: float, observed_seconds: int) -> str:
+        """Return UP/DEGRADED/DOWN/NO_DATA classification for one day."""
+        if observed_seconds <= 0:
+            return "NO_DATA"
         if uptime_rate_pct >= STATUS_UP_THRESHOLD:
             return "UP"
         if uptime_rate_pct >= STATUS_DEGRADED_THRESHOLD:

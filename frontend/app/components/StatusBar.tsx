@@ -5,9 +5,6 @@ export default function StatusBar({
 }) {
   if (!buckets?.length) return null;
 
-  // Newest on the left.
-  const reversed = [...buckets].reverse();
-
   function colorToHex(c: string) {
     switch (c) {
       case "green":
@@ -59,21 +56,20 @@ export default function StatusBar({
   }
 
   const markers: string[] = [];
-  markers.push(toTime(reversed[0].start));
+  markers.push(toTime(buckets[0].start));
 
-  for (let i = 4; i < reversed.length; i += 4) {
-    markers.push(toTime(reversed[i].start));
+  for (let i = 4; i < buckets.length; i += 4) {
+    markers.push(toTime(buckets[i].start));
   }
 
-  markers.push(toTime(reversed[reversed.length - 1].end));
+  markers.push(toTime(buckets[buckets.length - 1].end));
 
-  const reversedMarkers = [...markers].reverse();
-  const groupCount = reversedMarkers.length;
+  const groupCount = markers.length;
 
   return (
     <div className="status-wrapper">
       <div className="status-grid">
-        {reversed.map((bucket, index) => (
+        {buckets.map((bucket, index) => (
           <div
             key={index}
             className="status-bucket"
@@ -88,7 +84,7 @@ export default function StatusBar({
       </div>
 
       <div className="timeline" style={{ gridTemplateColumns: `repeat(${groupCount}, 1fr)` }}>
-        {reversedMarkers.map((marker, index) => (
+        {markers.map((marker, index) => (
           <div key={index} className="timeline-marker">
             {marker}
           </div>

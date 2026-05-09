@@ -53,7 +53,8 @@ export default function Header() {
 
         <p className="header-description">
           NetRadar monitors service reachability and basic performance. Click any service card
-          to view detailed daily history, charts, and export options.
+          to view detailed daily history, charts, and export options. Service timelines run from
+          oldest on the left to newest on the right.
         </p>
       </div>
 

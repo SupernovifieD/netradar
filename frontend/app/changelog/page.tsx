@@ -36,6 +36,10 @@ export default function ChangelogPage() {
             action buttons.
           </li>
           <li>Backend TUI add-service panel background is now fully black for clarity.</li>
+          <li>
+            Header description now explicitly explains service timeline direction: oldest on the
+            left, newest on the right.
+          </li>
         </ul>
 
         <h4>Fixed</h4>
@@ -52,6 +56,10 @@ export default function ChangelogPage() {
           <li>
             Frontend outage badge logic now triggers only when the latest 4 buckets are red. If
             the newest bucket is not red, outage is not shown.
+          </li>
+          <li>
+            Frontend service-card status ribbons now render buckets and time markers in matching
+            chronological order (oldest on left, newest on right).
           </li>
         </ul>
 

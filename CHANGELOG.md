@@ -23,6 +23,8 @@ Pre-release notes for the next version after `0.1.0`.
   - modal panel is now a smaller, center-aligned box
   - action buttons (`Cancel` / `Save`) are centered
   - add-service panel background is fully black for visual clarity
+- Header description now explicitly explains service timeline direction:
+  oldest on the left, newest on the right.
 
 ### Fixed
 
@@ -33,6 +35,8 @@ Pre-release notes for the next version after `0.1.0`.
 - Removed leftover unused time-marker label rendering line in detail bucket section.
 - Frontend outage badge logic now triggers only when the latest 4 buckets are red.
   If the newest bucket is not red, outage is not shown.
+- Frontend service-card status ribbons now render buckets and time markers in matching
+  chronological order (oldest on left, newest on right).
 
 ## [0.1.0] - 2026-05-08
 

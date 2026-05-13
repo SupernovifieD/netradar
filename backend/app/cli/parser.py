@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 
 
 def _parse_bool(value: str) -> bool:
@@ -35,7 +36,10 @@ def build_parser() -> argparse.ArgumentParser:
         description="NetRadar automation CLI for local and API-driven operations.",
     )
     parser.add_argument("--mode", choices=["local", "api"], default="local")
-    parser.add_argument("--api-base-url", default="http://localhost:5001/api")
+    parser.add_argument(
+        "--api-base-url",
+        default=os.environ.get("NETRADAR_API_BASE_URL", "http://localhost:5001/api"),
+    )
     parser.add_argument("--timeout-sec", type=float, default=10.0)
     parser.add_argument("--json", action="store_true", dest="json_output")
     parser.add_argument("--fail-on-empty", action="store_true")

@@ -24,12 +24,15 @@ npm run dev
 
 Frontend runs on `http://localhost:3001`.
 
-Important: backend must be running at `http://localhost:5001` because API calls are hardcoded in `lib/api.ts` (`API_BASE`).
+Important: backend must be running at `http://localhost:5001` for the default local setup.
+Browser requests use the frontend `/api/...` proxy by default, and server-side rendering uses
+`NETRADAR_API_INTERNAL_URL` or `NETRADAR_API_URL` when set.
 
 ## Directory Guide
 
 - `app/page.tsx`: home page shell.
 - `app/[service]/page.tsx`: service detail page.
+- `app/api/[...path]/route.ts`: same-origin proxy to the backend API.
 - `app/components/`: UI building blocks.
 - `lib/api.ts`: frontend data fetching + bucketing + core color logic.
 - `types/service.ts`: TypeScript contracts for API data.

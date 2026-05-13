@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Final, Iterator
 
 from app.db import SQLITE_BUSY_TIMEOUT_MS, SQLITE_TIMEOUT_SECONDS
@@ -108,6 +109,8 @@ def get_daily_connection(
 
 def init_daily_db(db_path: str) -> None:
     """Create tables and indexes required by the daily aggregate layer."""
+    Path(db_path).expanduser().parent.mkdir(parents=True, exist_ok=True)
+
     with get_daily_connection(db_path) as connection:
         cursor = connection.cursor()
 

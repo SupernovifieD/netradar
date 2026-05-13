@@ -5,13 +5,15 @@ from __future__ import annotations
 
 from app import create_app
 from app.services.monitor import monitor
+from config import Config
 
 app = create_app()
 
 
 def print_startup_banner() -> None:
     """Print API URL and available endpoints."""
-    print("\nFlask API running on http://localhost:5001")
+    display_host = "localhost" if Config.HOST in {"0.0.0.0", "::"} else Config.HOST
+    print(f"\nFlask API running on http://{display_host}:{Config.PORT}")
     print("API endpoints:")
     print("  GET  /api/status                       - Current status of all services")
     print("  GET  /api/history                      - Recent check history")
@@ -34,7 +36,7 @@ def main() -> None:
     """Start the monitor and run the Flask development server."""
     monitor.start()
     print_startup_banner()
-    app.run(host="0.0.0.0", port=5001, debug=False)
+    app.run(host=Config.HOST, port=Config.PORT, debug=False)
 
 
 if __name__ == "__main__":

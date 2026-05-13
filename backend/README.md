@@ -215,6 +215,14 @@ python run.py
 
 API base URL: `http://localhost:5001/api`
 
+Runtime configuration can be overridden with environment variables:
+
+- `NETRADAR_HOST` / `NETRADAR_PORT`: API bind address and port.
+- `NETRADAR_DATABASE_PATH`: raw SQLite database path.
+- `NETRADAR_DAILY_DATABASE_PATH`: daily aggregate SQLite database path.
+- `NETRADAR_SERVICES_FILE`: service catalog JSON path used by API, CLI, TUI, and monitor policy loading.
+- `NETRADAR_CHECK_INTERVAL`, `NETRADAR_SERVICE_INTERVAL_SECONDS`, `NETRADAR_SERVICE_JITTER_SECONDS`, `NETRADAR_MAX_BACKOFF_SECONDS`, `NETRADAR_MAX_WORKERS`: monitor scheduling defaults.
+
 ## Backend TUI
 
 The backend now includes a Textual TUI with two screens:
@@ -266,7 +274,7 @@ python cli.py --help
 ### Global flags
 
 - `--mode local|api` (default: `local`)
-- `--api-base-url` (default: `http://localhost:5001/api`)
+- `--api-base-url` (default: `http://localhost:5001/api`, or `NETRADAR_API_BASE_URL` when set)
 - `--timeout-sec` (API mode request timeout)
 - `--json` (machine-friendly output envelope)
 - `--fail-on-empty` (treat empty result as failure)

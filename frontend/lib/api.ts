@@ -6,7 +6,8 @@ import {
   TimeSeriesPoint,
 } from "@/types/service";
 
-const API_BASE = "http://localhost:5001/api";
+const DEFAULT_BROWSER_API_BASE = "/api";
+const DEFAULT_SERVER_API_BASE = "http://localhost:5001/api";
 const HALF_HOUR_MS = 30 * 60 * 1000;
 
 interface Bucket {
@@ -23,9 +24,25 @@ type BucketSummary = {
   color: string;
 };
 
+function trimTrailingSlash(value: string): string {
+  return value.endsWith("/") ? value.slice(0, -1) : value;
+}
+
+function getApiBase(): string {
+  if (typeof window === "undefined") {
+    return trimTrailingSlash(
+      process.env.NETRADAR_API_INTERNAL_URL ??
+        process.env.NETRADAR_API_URL ??
+        DEFAULT_SERVER_API_BASE
+    );
+  }
+
+  return trimTrailingSlash(process.env.NEXT_PUBLIC_NETRADAR_API_URL ?? DEFAULT_BROWSER_API_BASE);
+}
+
 async function fetchApi<T>(path: string): Promise<T | null> {
   try {
-    const response = await fetch(`${API_BASE}${path}`, {
+    const response = await fetch(`${getApiBase()}${path}`, {
       cache: "no-store",
     });
 

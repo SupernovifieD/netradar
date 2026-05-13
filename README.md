@@ -21,22 +21,51 @@ It has two parts:
 2. Each service is probed when due (default every 60 seconds) with jitter and capped backoff.
 3. For each due service, NetRadar performs DNS, TCP/HTTP(S), and ping checks.
 4. Probe outcomes include reason metadata such as `OK`, `FORBIDDEN`, `RATE_LIMITED`, or failure reasons.
-5. Raw check results are stored in `backend/netradar.db`.
-6. Daily aggregates are generated into `backend/netradar_daily.db`.
+5. Raw check results are stored in SQLite (`backend/netradar.db` locally, `/data/netradar.db` in Docker).
+6. Daily aggregates are generated into SQLite (`backend/netradar_daily.db` locally, `/data/netradar_daily.db` in Docker).
 7. The frontend calls backend APIs and renders the dashboard.
 
 ## Quick Start
 
 ### Prerequisites
 
-- Python 3.10+ (recommended)
-- Node.js 18+ and npm
+- Docker with Docker Compose for containerized self-hosting.
+- Python 3.10+ plus Node.js 18+ and npm for manual local development.
 
 ### 1) Clone and enter the repository
 
 Clone the repo and open it in your preferred IDE.
 
-### 2) Start backend (Terminal 1)
+### 2) Self-host with Docker Compose
+
+This runs the backend, frontend, and persistent SQLite storage:
+
+```bash
+docker compose up --build
+```
+
+First-time builds need internet access to pull base images and install image dependencies. The
+dashboard runs at `http://localhost:3001`; the backend API is exposed at
+`http://localhost:5001/api`.
+
+Container data is stored in the `netradar-data` Docker volume. The root `services.json` file is
+mounted into the backend container so CLI/TUI service edits and host-side edits use the same
+catalog.
+
+Useful container commands:
+
+```bash
+# Stop containers without deleting stored SQLite history
+docker compose down
+
+# Run CLI commands inside the backend container
+docker compose exec backend python cli.py status current
+
+# Run the TUI inside the backend container
+docker compose exec backend python tui.py
+```
+
+### 3) Manual local development: start backend (Terminal 1)
 
 Open a terminal and run the following commands:
 
@@ -51,7 +80,7 @@ python run.py
 Backend runs on:
 - API: `http://localhost:5001/api`
 
-### 3) Start frontend (Terminal 2)
+### 4) Manual local development: start frontend (Terminal 2)
 
 Open a **new terminal window/tab**:
 
@@ -66,7 +95,7 @@ Frontend runs on:
 
 ## Important: Use Two Terminals
 
-You must run backend and frontend in **separate terminals** at the same time:
+For manual local development, you must run backend and frontend in **separate terminals** at the same time:
 - Terminal 1: backend
 - Terminal 2: frontend
 
@@ -158,7 +187,7 @@ python cli.py services remove example.com --yes
 ### CLI modes
 
 - `--mode local` (default): reads directly from local backend databases/files.
-- `--mode api`: calls a running backend API (default URL: `http://localhost:5001/api`).
+- `--mode api`: calls a running backend API (default URL: `http://localhost:5001/api`, or `NETRADAR_API_BASE_URL` when set).
 - `services add|update|remove` are local-mode only because they edit local `services.json`.
 
 Monitor control commands are API-mode only:
@@ -188,6 +217,10 @@ python cli.py --mode api monitor stop
 - Backend default DB files:
   - `backend/netradar.db` (raw checks)
   - `backend/netradar_daily.db` (daily aggregates)
+- Docker defaults:
+  - `/data/netradar.db` and `/data/netradar_daily.db` inside the backend container.
+  - `/config/services.json` inside the backend container.
+  - `NETRADAR_API_INTERNAL_URL=http://backend:5001/api` inside the frontend container.
 
 ## Need More Details?
 

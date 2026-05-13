@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import sqlite3
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Final, Iterator
 
 SQLITE_TIMEOUT_SECONDS: Final[float] = 30.0
@@ -77,6 +78,8 @@ def init_db(db_path: str) -> None:
     Args:
         db_path: Path to the SQLite database file.
     """
+    Path(db_path).expanduser().parent.mkdir(parents=True, exist_ok=True)
+
     with get_connection(db_path) as connection:
         cursor = connection.cursor()
 

@@ -6,6 +6,19 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from app.time_utils import format_iso_utc_for_display, format_storage_datetime_for_display
+
+UTC_TIMESTAMP_KEYS = {
+    "computed_at_utc",
+    "end_at_utc",
+    "first_check_at_utc",
+    "last_checked_at_utc",
+    "last_check_at_utc",
+    "next_due_at_utc",
+    "probed_at_utc",
+    "start_at_utc",
+}
+
 
 def utc_now_iso() -> str:
     """Return canonical UTC timestamp for CLI envelopes."""
@@ -106,6 +119,50 @@ def render_table(rows: list[dict[str, Any]], columns: list[str], *, max_rows: in
     return "\n".join(lines)
 
 
+def _with_local_raw_timestamps(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Add display-time columns for human raw-check tables."""
+    output = []
+    for row in rows:
+        display_row = dict(row)
+        local_datetime = format_storage_datetime_for_display(
+            str(row.get("date") or ""),
+            str(row.get("time") or ""),
+        )
+        if local_datetime != "n/a" and " " in local_datetime:
+            local_date, local_time = local_datetime.split(" ", 1)
+        else:
+            local_date, local_time = "n/a", "n/a"
+        display_row["local_date"] = local_date
+        display_row["local_time"] = local_time
+        output.append(display_row)
+    return output
+
+
+def _with_local_utc_fields(value: Any) -> Any:
+    """Add local display timestamp fields beside known ``*_utc`` timestamps."""
+    if isinstance(value, list):
+        return [_with_local_utc_fields(item) for item in value]
+    if not isinstance(value, dict):
+        return value
+
+    output: dict[str, Any] = {}
+    for key, item in value.items():
+        output[key] = _with_local_utc_fields(item)
+        if key in UTC_TIMESTAMP_KEYS and isinstance(item, str) and item:
+            local_key = f"{key.removesuffix('_utc')}_local"
+            output[local_key] = format_iso_utc_for_display(item)
+
+    if "date" in value and "time" in value:
+        local_datetime = format_storage_datetime_for_display(
+            str(value.get("date") or ""),
+            str(value.get("time") or ""),
+        )
+        if local_datetime != "n/a" and " " in local_datetime:
+            output["local_date"], output["local_time"] = local_datetime.split(" ", 1)
+
+    return output
+
+
 def render_human(command: str, data: Any, meta: dict[str, Any]) -> str:
     """Render concise human-readable output by command."""
     if command == "health":
@@ -120,6 +177,7 @@ def render_human(command: str, data: Any, meta: dict[str, Any]) -> str:
 
     if command == "status.current":
         rows = data if isinstance(data, list) else []
+        rows = _with_local_raw_timestamps(rows)
         columns = [
             "service",
             "status",
@@ -129,13 +187,14 @@ def render_human(command: str, data: Any, meta: dict[str, Any]) -> str:
             "tcp",
             "latency",
             "packet_loss",
-            "date",
-            "time",
+            "local_date",
+            "local_time",
         ]
         return f"Current status rows: {len(rows)}\n{render_table(rows, columns)}"
 
     if command in {"history.recent", "history.24h", "history.service"}:
         rows = data if isinstance(data, list) else []
+        rows = _with_local_raw_timestamps(rows)
         columns = [
             "id",
             "service",
@@ -146,8 +205,8 @@ def render_human(command: str, data: Any, meta: dict[str, Any]) -> str:
             "tcp",
             "latency",
             "packet_loss",
-            "date",
-            "time",
+            "local_date",
+            "local_time",
         ]
         return f"History rows: {len(rows)}\n{render_table(rows, columns)}"
 
@@ -177,12 +236,12 @@ def render_human(command: str, data: Any, meta: dict[str, Any]) -> str:
         "monitor.policy",
         "monitor.runtime",
     } and isinstance(data, dict):
-        return dumps_pretty_json(data)
+        return dumps_pretty_json(_with_local_utc_fields(data))
 
     if command == "probe.service":
-        return dumps_pretty_json(data)
+        return dumps_pretty_json(_with_local_utc_fields(data))
 
     if command in {"ops.snapshot", "ops.gate"}:
-        return dumps_pretty_json(data)
+        return dumps_pretty_json(_with_local_utc_fields(data))
 
     return dumps_pretty_json(data)

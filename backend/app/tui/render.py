@@ -7,6 +7,7 @@ from datetime import datetime
 
 from rich.text import Text
 
+from app.time_utils import format_datetime_for_display
 from app.tui.stats import BucketSummary, SeriesPoint
 
 SPARK_CHARS = "▁▂▃▄▅▆▇█"
@@ -325,4 +326,4 @@ def style_metric_value(value: float, *, kind: str) -> Text:
 
 def format_updated_at(now: datetime) -> str:
     """Return uniform timestamp text for footer/status messages."""
-    return now.strftime("%Y-%m-%d %H:%M:%S")
+    return format_datetime_for_display(now)

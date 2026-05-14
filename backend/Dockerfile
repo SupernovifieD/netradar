@@ -6,12 +6,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     NETRADAR_DAILY_DATABASE_PATH=/data/netradar_daily.db \
     NETRADAR_SERVICES_FILE=/app/services.json \
     NETRADAR_HOST=0.0.0.0 \
-    NETRADAR_PORT=5001
+    NETRADAR_PORT=5001 \
+    TZ=UTC
 
 WORKDIR /app/backend
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates iputils-ping \
+    && apt-get install -y --no-install-recommends ca-certificates iputils-ping tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/requirements.txt ./requirements.txt

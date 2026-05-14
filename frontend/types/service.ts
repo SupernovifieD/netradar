@@ -8,8 +8,8 @@ export interface ServiceCheck {
   status: string;
   probe_reason?: string | null;
   http_status_code?: number | null;
-  date: string; // "2026-04-29"
-  time: string; // "20:12:51"
+  date: string; // UTC date, e.g. "2026-04-29"
+  time: string; // UTC time, e.g. "20:12:51"
 }
 
 export interface ServiceMeta {

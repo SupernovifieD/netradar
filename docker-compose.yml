@@ -9,6 +9,8 @@ services:
       NETRADAR_SERVICES_FILE: /config/services.json
       NETRADAR_HOST: 0.0.0.0
       NETRADAR_PORT: 5001
+      NETRADAR_DISPLAY_TIMEZONE: ${NETRADAR_DISPLAY_TIMEZONE:-}
+      TZ: ${TZ:-UTC}
     ports:
       - "5001:5001"
     volumes:

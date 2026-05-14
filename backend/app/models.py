@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
 from app.db import get_connection
+from app.time_utils import utc_now
 from config import Config
 
 CheckWriteRow = tuple[str, str, str, str, str, str, str | None, int | None]
@@ -27,7 +27,7 @@ class CheckResult:
     ) -> None:
         """Persist one monitoring result row.
 
-        The schema stores date and time as separate text fields to preserve
+        The schema stores UTC date and time as separate text fields to preserve
         compatibility with existing queries and dashboard parsing.
         """
         CheckResult.save_many(
@@ -72,7 +72,7 @@ class CheckResult:
                     probe_reason,
                     http_status_code,
                 ) = row
-            now = datetime.now()
+            now = utc_now()
             date = now.strftime("%Y-%m-%d")
             time = now.strftime("%H:%M:%S")
             dated_rows.append(

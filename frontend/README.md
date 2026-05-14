@@ -48,6 +48,9 @@ Browser requests use the frontend `/api/...` proxy by default, and server-side r
 3. Each bucket gets a color token from `determineColor(...)`.
 4. Components render color tokens as timeline blocks, legends, and tooltips.
 
+Raw check `date`/`time` fields from the API are UTC. The frontend parses them as UTC and displays
+timeline/chart labels in the viewer's browser timezone.
+
 ## Coloring Logic
 
 ### 1) Bucket color classification (core logic)

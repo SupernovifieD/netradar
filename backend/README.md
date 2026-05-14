@@ -39,8 +39,8 @@ The backend stores raw checks in `netradar.db`:
   - `status` (TEXT)
   - `probe_reason` (TEXT, nullable)
   - `http_status_code` (INTEGER, nullable)
-  - `date` (TEXT, `YYYY-MM-DD`)
-  - `time` (TEXT, `HH:MM:SS`)
+  - `date` (TEXT, UTC `YYYY-MM-DD`)
+  - `time` (TEXT, UTC `HH:MM:SS`)
 
 Indexes:
 
@@ -221,6 +221,7 @@ Runtime configuration can be overridden with environment variables:
 - `NETRADAR_DATABASE_PATH`: raw SQLite database path.
 - `NETRADAR_DAILY_DATABASE_PATH`: daily aggregate SQLite database path.
 - `NETRADAR_SERVICES_FILE`: service catalog JSON path used by API, CLI, TUI, and monitor policy loading.
+- `NETRADAR_DISPLAY_TIMEZONE` or `TZ`: timezone for terminal logs, CLI human output, and TUI display. Raw database timestamps remain UTC.
 - `NETRADAR_CHECK_INTERVAL`, `NETRADAR_SERVICE_INTERVAL_SECONDS`, `NETRADAR_SERVICE_JITTER_SECONDS`, `NETRADAR_MAX_BACKOFF_SECONDS`, `NETRADAR_MAX_WORKERS`: monitor scheduling defaults.
 
 ## Backend TUI

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from time import monotonic
 
 from rich.text import Text
@@ -14,6 +13,7 @@ from textual.timer import Timer
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
 from app.services.monitor import monitor
+from app.time_utils import format_iso_utc_for_display, format_storage_datetime_for_display, utc_now
 from app.tui.catalog import ServiceCatalog, ServiceCatalogItem
 from app.tui.render import (
     build_bucket_bar,
@@ -233,11 +233,14 @@ class ServiceDetailScreen(Screen):
             meta_text.append(" | Last Seen: ")
             meta_text.append_text(
                 style_timestamp(
-                    f"{latest.get('date', '')} {latest.get('time', '')}".strip() or "n/a"
+                    format_storage_datetime_for_display(
+                        str(latest.get("date") or ""),
+                        str(latest.get("time") or ""),
+                    )
                 )
             )
             next_due_raw = str(runtime.get("next_due_at_utc") or "").strip()
-            next_due = next_due_raw.replace("T", " ").replace("+00:00", "Z") if next_due_raw else "n/a"
+            next_due = format_iso_utc_for_display(next_due_raw) if next_due_raw else "n/a"
             meta_text.append("\nNext Check: ")
             meta_text.append_text(style_timestamp(next_due))
             meta_text.append(" | Backoff: ")
@@ -452,7 +455,7 @@ class ServiceDashboardScreen(Screen):
         visible_count = self._render_table()
 
         total = len(self._stats)
-        updated_at = format_updated_at(datetime.now())
+        updated_at = format_updated_at(utc_now())
         if visible_count > 0:
             self._set_status(
                 f"Loaded {total} services. Showing {visible_count}. "
@@ -475,11 +478,7 @@ class ServiceDashboardScreen(Screen):
 
             visible_count += 1
             visible_domains.append(service.domain)
-            next_due = (
-                stats.next_due_at_utc.replace("T", " ").replace("+00:00", "Z")
-                if stats.next_due_at_utc
-                else "n/a"
-            )
+            next_due = format_iso_utc_for_display(stats.next_due_at_utc) if stats.next_due_at_utc else "n/a"
             table.add_row(
                 service.name,
                 service.domain,

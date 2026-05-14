@@ -18,6 +18,7 @@ from app.services.monitoring_policy import (
     load_service_monitoring_policies,
     load_service_monitoring_snapshots,
 )
+from app.time_utils import format_time_for_display
 from config import Config
 
 FAILURE_REASONS = {"DNS_FAIL", "TCP_FAIL", "FORBIDDEN", "RATE_LIMITED", "CHECK_EXCEPTION"}
@@ -96,10 +97,10 @@ class ServiceMonitor:
                                 state.last_http_status_code = http_status_code
                                 state.last_checked_at_utc = checked_at_utc
                                 self._schedule_next_probe(state=state, now_utc=checked_at_utc, failed=failed)
-                                next_due_str = state.next_due_at_utc.strftime("%H:%M:%S")
+                                next_due_str = format_time_for_display(state.next_due_at_utc)
                                 backoff_seconds = state.current_backoff_seconds
                         print(
-                            f"[{checked_at_utc.strftime('%H:%M:%S')}] [{svc}] "
+                            f"[{format_time_for_display(checked_at_utc)}] [{svc}] "
                             f"DNS:{dns} TCP:{tcp} PING:{latency} STATUS:{status} "
                             f"REASON:{probe_reason}"
                             f"{f' HTTP:{http_status_code}' if http_status_code is not None else ''} "
@@ -115,7 +116,7 @@ class ServiceMonitor:
                                 state.last_checked_at_utc = checked_at_utc
                                 self._schedule_next_probe(state=state, now_utc=checked_at_utc, failed=True)
         else:
-            print(f"[{now_utc.strftime('%H:%M:%S')}] No services due this cycle.")
+            print(f"[{format_time_for_display(now_utc)}] No services due this cycle.")
 
         if rows_to_persist:
             try:
@@ -134,7 +135,7 @@ class ServiceMonitor:
             print(f"Error aggregating daily history: {exc}")
 
         print(
-            f"[{datetime.now().strftime('%H:%M:%S')}] "
+            f"[{format_time_for_display(datetime.now(timezone.utc))}] "
             f"Cycle completed (due={due_count}, persisted={len(rows_to_persist)})\n"
         )
 

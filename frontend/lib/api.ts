@@ -57,7 +57,7 @@ async function fetchApi<T>(path: string): Promise<T | null> {
 }
 
 function parseCheckTimestamp(check: ServiceCheck): number | null {
-  const timestamp = new Date(`${check.date}T${check.time}`).getTime();
+  const timestamp = new Date(`${check.date}T${check.time}Z`).getTime();
   return Number.isFinite(timestamp) ? timestamp : null;
 }
 

@@ -52,6 +52,14 @@ Container data is stored in the `netradar-data` Docker volume. The root `service
 mounted into the backend container so CLI/TUI service edits and host-side edits use the same
 catalog.
 
+Raw check timestamps are stored in UTC. The frontend renders them in the browser's local timezone.
+For backend terminal logs, CLI human output, and TUI output in Docker, set a display timezone
+before starting:
+
+```bash
+NETRADAR_DISPLAY_TIMEZONE=Asia/Tehran docker compose up --build
+```
+
 Useful container commands:
 
 ```bash
@@ -221,6 +229,7 @@ python cli.py --mode api monitor stop
   - `/data/netradar.db` and `/data/netradar_daily.db` inside the backend container.
   - `/config/services.json` inside the backend container.
   - `NETRADAR_API_INTERNAL_URL=http://backend:5001/api` inside the frontend container.
+  - `TZ=UTC` unless you override `NETRADAR_DISPLAY_TIMEZONE` or `TZ` for backend terminal/TUI/CLI display time.
 
 ## Need More Details?
 

@@ -7,6 +7,13 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from app.models import CheckResult
+from app.time_utils import (
+    display_timezone,
+    format_storage_datetime_for_display,
+    parse_utc_storage_datetime,
+    to_display_time,
+    utc_now,
+)
 from app.tui.catalog import ServiceCatalogItem
 
 HALF_HOUR_SECONDS = 30 * 60
@@ -33,7 +40,7 @@ class ServiceLatestStats:
     def last_seen(self) -> str:
         """Return combined timestamp for display."""
         if self.date and self.time:
-            return f"{self.date} {self.time}"
+            return format_storage_datetime_for_display(self.date, self.time)
         return "n/a"
 
 
@@ -63,7 +70,7 @@ def _parse_timestamp(row: dict[str, Any]) -> datetime | None:
         return None
 
     try:
-        return datetime.strptime(f"{date_value} {time_value}", "%Y-%m-%d %H:%M:%S")
+        return to_display_time(parse_utc_storage_datetime(date_value, time_value))
     except ValueError:
         return None
 
@@ -163,7 +170,12 @@ def build_half_hour_buckets(
     now: datetime | None = None,
 ) -> list[BucketSummary]:
     """Aggregate raw checks into half-hour buckets (oldest -> newest)."""
-    now_value = now or datetime.now()
+    if now is None:
+        now_value = to_display_time(utc_now())
+    elif now.tzinfo is None:
+        now_value = now.replace(tzinfo=display_timezone())
+    else:
+        now_value = to_display_time(now)
     aligned = now_value.replace(second=0, microsecond=0)
     minute = aligned.minute
     aligned = aligned.replace(minute=0 if minute < 30 else 30)
@@ -236,7 +248,7 @@ def build_half_hour_buckets(
 
 def _build_latency_series(rows: list[dict[str, Any]], *, window_hours: int = 6) -> list[SeriesPoint]:
     """Return latency points within the time window, sorted ascending."""
-    window_start = datetime.now() - timedelta(hours=window_hours)
+    window_start = to_display_time(utc_now()) - timedelta(hours=window_hours)
     points: list[SeriesPoint] = []
 
     for row in rows:

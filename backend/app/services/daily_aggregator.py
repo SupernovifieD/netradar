@@ -10,6 +10,7 @@ from typing import Any
 from app.daily_models import DailyIntervalRow, DailyServiceHistory, DailySummaryRow
 from app.models import CheckResult
 from app.services.monitoring_policy import ServiceMonitoringPolicy, load_service_monitoring_policies
+from app.time_utils import parse_utc_storage_datetime
 from config import Config
 
 AGGREGATION_ALGO_VERSION = 1
@@ -257,8 +258,7 @@ class DailyAggregator:
 
     def _parse_utc_timestamp(self, date_str: str, time_str: str) -> datetime:
         """Parse a raw check timestamp to a UTC-aware datetime."""
-        naive = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M:%S")
-        return naive.replace(tzinfo=timezone.utc)
+        return parse_utc_storage_datetime(date_str, time_str)
 
     def _parse_latency_ms(self, latency_value: str) -> float | None:
         """Parse a latency value to float milliseconds when valid."""

@@ -14,10 +14,23 @@ export default function ChangelogPage() {
         <h1>Changelog</h1>
 
         <h3>Unreleased</h3>
-        <p>Pre-release notes for the next version after v0.1.0.</p>
+        <p>No unreleased changes yet.</p>
+
+        <h3>v0.1.1</h3>
+        <p>2026-05-14</p>
+        <p>Self-hosting, display-time, and service-management maintenance release.</p>
 
         <h4>Added</h4>
         <ul>
+          <li>
+            Docker Compose self-hosting setup with backend and frontend images, persistent SQLite
+            storage, mounted <code>services.json</code>, backend healthcheck, and a frontend API
+            proxy for container networking.
+          </li>
+          <li>
+            Environment-based backend runtime configuration for database paths, services catalog
+            path, host/port, and scheduler defaults.
+          </li>
           <li>
             CLI service catalog mutation commands in local mode:
             <code>services add</code>, <code>services update</code>, and{" "}
@@ -27,10 +40,24 @@ export default function ChangelogPage() {
             Backend TUI detail-screen quit shortcut: <code>q</code> now exits directly from
             service detail screen.
           </li>
+          <li>README TODO and research sections for known follow-up work.</li>
         </ul>
 
         <h4>Changed</h4>
         <ul>
+          <li>
+            Raw check timestamps remain stored in UTC, while frontend displays use the browser
+            timezone and backend terminal/TUI/CLI displays use <code>NETRADAR_DISPLAY_TIMEZONE</code>{" "}
+            or <code>TZ</code>.
+          </li>
+          <li>
+            Docker backend images now include timezone data and default display timezone
+            configuration to UTC unless overridden.
+          </li>
+          <li>
+            Frontend build/runtime configuration now supports standalone Next.js container output
+            and binding to <code>0.0.0.0</code>.
+          </li>
           <li>
             Backend TUI add-service modal is now a smaller, center-aligned panel with centered
             action buttons.

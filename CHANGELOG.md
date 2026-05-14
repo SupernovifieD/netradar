@@ -6,19 +6,41 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
-Pre-release notes for the next version after `0.1.0`.
+No unreleased changes yet.
+
+## [0.1.1] - 2026-05-14
+
+Self-hosting, display-time, and service-management maintenance release.
 
 ### Added
 
+- Docker Compose self-hosting setup:
+  - backend and frontend Dockerfiles
+  - persistent SQLite storage volume
+  - mounted `services.json` service catalog
+  - backend healthcheck and frontend dependency ordering
+  - frontend API proxy for browser-safe container networking
+- Environment-based backend runtime configuration for hosted/containerized deployments:
+  - database paths
+  - daily database path
+  - services catalog path
+  - host/port
+  - scheduler defaults
 - CLI service catalog mutation commands (local mode):
   - `services add` to add a new service entry to `services.json`
   - `services update` to modify domain/name/group/category/monitoring fields
   - `services remove --yes` to remove a service with explicit confirmation
 - Backend TUI detail-screen quit shortcut:
   - `q` now exits directly from service detail screen (no need to go back first).
+- README TODO and research sections for known follow-up work.
 
 ### Changed
 
+- Raw check timestamps are still stored in UTC, while user-facing displays now use local time:
+  - frontend parses backend raw check timestamps as UTC and renders with the browser timezone
+  - backend terminal logs, CLI human output, and TUI output use `NETRADAR_DISPLAY_TIMEZONE` or `TZ`
+  - Docker installs timezone data and defaults display timezone configuration to UTC unless overridden
+- Frontend build/runtime configuration now supports standalone Next.js container output and binding to `0.0.0.0`.
 - Backend TUI add-service modal presentation:
   - modal panel is now a smaller, center-aligned box
   - action buttons (`Cancel` / `Save`) are centered

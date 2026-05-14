@@ -31,7 +31,7 @@ export default function AboutPage() {
         </p>
 
         <Link href="/changelog" style={{ display: "block", textAlign: "center" }}>
-          v0.1.0
+          v0.1.1
         </Link>
       </div>
 

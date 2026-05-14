@@ -242,6 +242,18 @@ For frontend coloring logic and notes, see:
 For AI-agent and automation workflows, see:
 - [skills.md](skills.md)
 
+## TODO
+
+- Remove current support from footer and also change the one in header with github page
+- TUI service screen refreshes 1 second after opening
+- Logging for due and preserve change to "due a out of b", and the same for preserve
+- When there's no latency data for a period, the GUI service card graphs use a crosshatch pattern for that period
+
+## Research
+
+- How DNS resolution check can be implemented in this service
+- How can TUI and CLI be used alongside containers easily and effectively
+
 ## License
 
 This project is open source under MIT license.

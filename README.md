@@ -248,6 +248,7 @@ For AI-agent and automation workflows, see:
 - TUI service screen refreshes 1 second after opening
 - Logging for due and preserve change to "due a out of b", and the same for preserve
 - When there's no latency data for a period, the GUI service card graphs use a crosshatch pattern for that period
+- Add an attractive wording to the readme around self-hosting 
 
 ## Research
 

@@ -217,6 +217,14 @@ python cli.py --mode api monitor stop
 ## Configuration Notes
 
 - Service list is defined in `services.json` (root).
+- Shared frontend/backend settings are defined in `frontend/netradar.config.json`.
+- Backend reads its config file at process startup:
+  - local default path (from backend): `../frontend/netradar.config.json`
+  - override path: `NETRADAR_SETTINGS_FILE`
+  - after edits, restart backend (`python run.py` or backend container restart).
+- Frontend imports `frontend/netradar.config.json` into the Next.js build/runtime:
+  - local dev usually reflects changes quickly, but if needed restart `npm run dev`
+  - for Docker images, rebuild frontend (`docker compose up --build`) after config edits.
 - Optional per-service policy can be added via `monitoring`:
   - `enabled` (default `true`)
   - `interval_seconds` (default `60`)
@@ -228,6 +236,7 @@ python cli.py --mode api monitor stop
 - Docker defaults:
   - `/data/netradar.db` and `/data/netradar_daily.db` inside the backend container.
   - `/config/services.json` inside the backend container.
+  - `/config/netradar.config.json` inside the backend container (mounted from `frontend/netradar.config.json`).
   - `NETRADAR_API_INTERNAL_URL=http://backend:5001/api` inside the frontend container.
   - `TZ=UTC` unless you override `NETRADAR_DISPLAY_TIMEZONE` or `TZ` for backend terminal/TUI/CLI display time.
 
@@ -236,7 +245,7 @@ python cli.py --mode api monitor stop
 For backend architecture, full endpoint docs, aggregation behavior, and operational details, see:
 - [backend/README.md](backend/README.md)
 
-For frontend coloring logic and notes, see:
+For full frontend configuration and theming reference, see:
 - [frontend/README.md](frontend/README.md)
 
 For AI-agent and automation workflows, see:

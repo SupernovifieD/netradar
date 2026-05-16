@@ -14,6 +14,7 @@ This directory contains the Flask API and background monitor that powers NetRada
 ## Module map
 
 - `config.py`: central runtime configuration values.
+- `../frontend/netradar.config.json`: shared settings file read by backend + frontend.
 - `app/__init__.py`: Flask app factory and startup wiring.
 - `app/db.py`: SQLite connection and schema initialization helpers.
 - `app/daily_db.py`: schema/connection helpers for daily aggregates DB.
@@ -67,7 +68,7 @@ Runtime SQLite settings (both DBs):
 - `busy_timeout=30000` to wait for transient locks before failing.
 - Batched insert writes per monitor cycle to reduce lock churn.
 
-Monitor runtime defaults:
+Monitor runtime defaults (from shared config unless overridden):
 
 - global scheduler tick: `CHECK_INTERVAL = 60s`
 - per-service default probe interval: `60s`
@@ -159,22 +160,22 @@ Validation failures use:
   - Each summary row includes inline `intervals`.
   - Validation: `day` must match `YYYY-MM-DD`; `limit` must be positive; `offset >= 0`.
 
-### Export endpoints (max 90 days)
+### Export endpoints (max configured days; default 90)
 
 - `GET /service/<service>/export/raw?days=<int>`
   - Returns raw checks for one service in the last `days` (UTC window).
   - Default: `days=90`.
-  - Hard limit: `days <= 90`.
+  - Hard limit: `days <= max_days` from config (`backend.export.max_days`, default `90`).
   - Response payload: `service`, `days`, `start_utc`, `end_utc`, `data`.
-  - If `days > 90`, API returns an error asking user to contact the administrator.
+  - If `days > max_days`, API returns an error asking user to contact the administrator.
 
 - `GET /service/<service>/export/daily?days=<int>`
   - Returns daily summary rows for one service in the last `days` closed UTC days.
   - Default: `days=90`.
-  - Hard limit: `days <= 90`.
+  - Hard limit: `days <= max_days` from config (`backend.export.max_days`, default `90`).
   - Response payload: `service`, `days`, `start_day_utc`, `end_day_utc`, `data`.
   - Rows include inline `intervals`.
-  - If `days > 90`, API returns an error asking user to contact the administrator.
+  - If `days > max_days`, API returns an error asking user to contact the administrator.
 
 ### Monitor control and health
 
@@ -215,14 +216,48 @@ python run.py
 
 API base URL: `http://localhost:5001/api`
 
-Runtime configuration can be overridden with environment variables:
+### Backend configuration notes
 
-- `NETRADAR_HOST` / `NETRADAR_PORT`: API bind address and port.
-- `NETRADAR_DATABASE_PATH`: raw SQLite database path.
-- `NETRADAR_DAILY_DATABASE_PATH`: daily aggregate SQLite database path.
-- `NETRADAR_SERVICES_FILE`: service catalog JSON path used by API, CLI, TUI, and monitor policy loading.
-- `NETRADAR_DISPLAY_TIMEZONE` or `TZ`: timezone for terminal logs, CLI human output, and TUI display. Raw database timestamps remain UTC.
-- `NETRADAR_CHECK_INTERVAL`, `NETRADAR_SERVICE_INTERVAL_SECONDS`, `NETRADAR_SERVICE_JITTER_SECONDS`, `NETRADAR_MAX_BACKOFF_SECONDS`, `NETRADAR_MAX_WORKERS`: monitor scheduling defaults.
+Primary settings source:
+- `frontend/netradar.config.json` (resolved from backend as `../frontend/netradar.config.json`)
+
+Alternate settings path:
+- `NETRADAR_SETTINGS_FILE` can point to another JSON file.
+
+Load precedence:
+1. Explicit environment variable override (where supported)
+2. Value from settings file
+3. Built-in fallback default in `config.py`
+
+Environment variables currently override:
+- `NETRADAR_HOST` / `NETRADAR_PORT`
+- `NETRADAR_DATABASE_PATH`
+- `NETRADAR_DAILY_DATABASE_PATH`
+- `NETRADAR_SERVICES_FILE`
+- `NETRADAR_CHECK_INTERVAL`
+- `NETRADAR_SERVICE_INTERVAL_SECONDS`
+- `NETRADAR_SERVICE_JITTER_SECONDS`
+- `NETRADAR_MAX_BACKOFF_SECONDS`
+- `NETRADAR_MAX_WORKERS`
+
+Timezone display controls:
+- `NETRADAR_DISPLAY_TIMEZONE` or `TZ` affect terminal logs, CLI human output, and TUI display.
+- Raw database timestamps remain UTC.
+
+Major config sections in `frontend/netradar.config.json`:
+- `shared.status_timeline`: shared status token labels/colors and thresholds.
+- `backend.runtime`: scheduler defaults.
+- `backend.sqlite`: SQLite timeout and busy timeout.
+- `backend.checker`: DNS/HTTP/ping behavior and headers.
+- `backend.daily_aggregation`: daily status thresholds.
+- `backend.export`: export hard limit.
+- `backend.api_defaults`: default query limits/offsets/days.
+- `backend.cli`: CLI default API URL/timeouts/ops defaults.
+- `backend.tui`: refresh cadence, chart colors, metric thresholds.
+- `frontend.timeline.bucket_window_minutes`: backend bucket window width source used for bucket sizing.
+
+Operational note:
+- Config is loaded at process start. Restart the backend process after config changes.
 
 ## Backend TUI
 

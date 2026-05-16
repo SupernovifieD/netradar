@@ -11,8 +11,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Final, Iterator
 
-SQLITE_TIMEOUT_SECONDS: Final[float] = 30.0
-SQLITE_BUSY_TIMEOUT_MS: Final[int] = 30_000
+from config import Config
+
+SQLITE_TIMEOUT_SECONDS = Config.SQLITE_TIMEOUT_SECONDS
+SQLITE_BUSY_TIMEOUT_MS = Config.SQLITE_BUSY_TIMEOUT_MS
 
 CHECKS_TABLE_SQL: Final[str] = """
     CREATE TABLE IF NOT EXISTS checks (

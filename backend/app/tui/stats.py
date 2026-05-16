@@ -15,8 +15,9 @@ from app.time_utils import (
     utc_now,
 )
 from app.tui.catalog import ServiceCatalogItem
+from config import Config
 
-HALF_HOUR_SECONDS = 30 * 60
+HALF_HOUR_SECONDS = Config.TIMELINE_BUCKET_WINDOW_MINUTES * 60
 
 
 @dataclass(slots=True, frozen=True)
@@ -87,19 +88,31 @@ def _parse_latency(value: str | None) -> float | None:
 
 def determine_bucket_color(up_percent: float, avg_latency: float | None) -> str:
     """Apply the same bucket coloring rules as the frontend."""
-    if up_percent >= 80 and avg_latency is not None and avg_latency < 40:
+    if (
+        up_percent >= Config.TIMELINE_UP_STABLE_THRESHOLD
+        and avg_latency is not None
+        and avg_latency < Config.TIMELINE_HIGH_LATENCY_THRESHOLD_MS
+    ):
         return "green"
-    if 20 <= up_percent < 80 and avg_latency is not None and avg_latency < 40:
+    if (
+        Config.TIMELINE_UP_DEGRADED_THRESHOLD <= up_percent < Config.TIMELINE_UP_STABLE_THRESHOLD
+        and avg_latency is not None
+        and avg_latency < Config.TIMELINE_HIGH_LATENCY_THRESHOLD_MS
+    ):
         return "darkgreen"
-    if up_percent >= 80 and avg_latency is not None and avg_latency >= 40:
+    if (
+        up_percent >= Config.TIMELINE_UP_STABLE_THRESHOLD
+        and avg_latency is not None
+        and avg_latency >= Config.TIMELINE_HIGH_LATENCY_THRESHOLD_MS
+    ):
         return "orange"
-    if up_percent >= 80 and avg_latency is None:
+    if up_percent >= Config.TIMELINE_UP_STABLE_THRESHOLD and avg_latency is None:
         return "blue"
-    if up_percent >= 20 and avg_latency is None:
+    if up_percent >= Config.TIMELINE_UP_DEGRADED_THRESHOLD and avg_latency is None:
         return "darkblue"
-    if up_percent < 20:
-        return "red"
-    return "grey"
+    if up_percent < Config.TIMELINE_UP_DEGRADED_THRESHOLD:
+        return Config.TIMELINE_OUTAGE_TOKEN
+    return Config.TIMELINE_FALLBACK_TOKEN
 
 
 def fetch_latest_stats(
@@ -177,8 +190,8 @@ def build_half_hour_buckets(
     else:
         now_value = to_display_time(now)
     aligned = now_value.replace(second=0, microsecond=0)
-    minute = aligned.minute
-    aligned = aligned.replace(minute=0 if minute < 30 else 30)
+    bucket_minutes = Config.TIMELINE_BUCKET_WINDOW_MINUTES
+    aligned = aligned.replace(minute=(aligned.minute // bucket_minutes) * bucket_minutes)
 
     start_time = aligned - timedelta(seconds=(bucket_count - 1) * HALF_HOUR_SECONDS)
     buckets: list[dict[str, Any]] = []

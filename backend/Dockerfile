@@ -5,6 +5,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     NETRADAR_DATABASE_PATH=/data/netradar.db \
     NETRADAR_DAILY_DATABASE_PATH=/data/netradar_daily.db \
     NETRADAR_SERVICES_FILE=/app/services.json \
+    NETRADAR_SETTINGS_FILE=/app/netradar.config.json \
     NETRADAR_HOST=0.0.0.0 \
     NETRADAR_PORT=5001 \
     TZ=UTC
@@ -20,6 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ ./
 COPY services.json /app/services.json
+COPY frontend/netradar.config.json /app/netradar.config.json
 
 RUN mkdir -p /data
 

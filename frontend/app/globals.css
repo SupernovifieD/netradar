@@ -383,7 +383,7 @@ p a:hover {
 }
 
 .service-card-link:focus-visible .box {
-  outline: 2px solid #4ea3ff;
+  outline: 2px solid var(--timeline-blue, #4ea3ff);
   outline-offset: 2px;
 }
 
@@ -535,32 +535,32 @@ p a:hover {
 }
 
 .service-calendar-cell--up {
-  background: #1e8c4e;
-  color: #ebfff3;
+  background: var(--calendar-up-bg, #1e8c4e);
+  color: var(--calendar-up-fg, #ebfff3);
 }
 
 .service-calendar-cell--degraded {
-  background: #a0611f;
-  color: #fff5ea;
+  background: var(--calendar-degraded-bg, #a0611f);
+  color: var(--calendar-degraded-fg, #fff5ea);
 }
 
 .service-calendar-cell--down {
-  background: #8f2d27;
-  color: #ffecec;
+  background: var(--calendar-down-bg, #8f2d27);
+  color: var(--calendar-down-fg, #ffecec);
 }
 
 .service-calendar-cell--nodata {
-  background: #d9d9d9;
-  color: #3f3f3f;
+  background: var(--calendar-nodata-bg, #d9d9d9);
+  color: var(--calendar-nodata-fg, #3f3f3f);
 }
 
 .service-calendar-cell--future {
-  background: #252525;
-  color: #9f9f9f;
+  background: var(--calendar-future-bg, #252525);
+  color: var(--calendar-future-fg, #9f9f9f);
 }
 
 .service-calendar-cell--today {
-  box-shadow: 0 0 0 2px #f2f2f2 inset;
+  box-shadow: 0 0 0 2px var(--calendar-today-ring, #f2f2f2) inset;
 }
 
 .service-calendar-legend {
@@ -584,19 +584,19 @@ p a:hover {
 }
 
 .service-calendar-dot--up {
-  background: #2ecc71;
+  background: var(--timeline-green, #2ecc71);
 }
 
 .service-calendar-dot--degraded {
-  background: #e67e22;
+  background: var(--timeline-orange, #e67e22);
 }
 
 .service-calendar-dot--down {
-  background: #e74c3c;
+  background: var(--timeline-red, #e74c3c);
 }
 
 .service-calendar-dot--nodata {
-  background: #c7c7c7;
+  background: var(--calendar-nodata-bg, #c7c7c7);
 }
 
 .service-calendar-dot--future {

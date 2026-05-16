@@ -7,6 +7,7 @@ services:
       NETRADAR_DATABASE_PATH: /data/netradar.db
       NETRADAR_DAILY_DATABASE_PATH: /data/netradar_daily.db
       NETRADAR_SERVICES_FILE: /config/services.json
+      NETRADAR_SETTINGS_FILE: /config/netradar.config.json
       NETRADAR_HOST: 0.0.0.0
       NETRADAR_PORT: 5001
       NETRADAR_DISPLAY_TIMEZONE: ${NETRADAR_DISPLAY_TIMEZONE:-}
@@ -16,6 +17,7 @@ services:
     volumes:
       - netradar-data:/data
       - ./services.json:/config/services.json
+      - ./frontend/netradar.config.json:/config/netradar.config.json:ro
     healthcheck:
       test:
         [

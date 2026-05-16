@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { frontendConfig } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
-const DEFAULT_INTERNAL_API_BASE = "http://localhost:5001/api";
+const DEFAULT_INTERNAL_API_BASE = frontendConfig.api.defaultInternalBase;
 const HOP_BY_HOP_HEADERS = new Set([
   "connection",
   "content-encoding",

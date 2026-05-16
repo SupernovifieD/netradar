@@ -5,10 +5,11 @@ import {
   ServiceMeta,
   TimeSeriesPoint,
 } from "@/types/service";
+import { frontendConfig, statusTimelineConfig } from "@/lib/config";
 
-const DEFAULT_BROWSER_API_BASE = "/api";
-const DEFAULT_SERVER_API_BASE = "http://localhost:5001/api";
-const HALF_HOUR_MS = 30 * 60 * 1000;
+const DEFAULT_BROWSER_API_BASE = frontendConfig.api.defaultBrowserBase;
+const DEFAULT_SERVER_API_BASE = frontendConfig.api.defaultServerBase;
+const HALF_HOUR_MS = frontendConfig.timeline.bucketWindowMinutes * 60 * 1000;
 
 interface Bucket {
   start: Date;
@@ -70,7 +71,8 @@ function floorToHalfHour(timestamp: number): number {
   const date = new Date(timestamp);
   date.setSeconds(0);
   date.setMilliseconds(0);
-  date.setMinutes(date.getMinutes() < 30 ? 0 : 30);
+  const bucketMinutes = frontendConfig.timeline.bucketWindowMinutes;
+  date.setMinutes(Math.floor(date.getMinutes() / bucketMinutes) * bucketMinutes);
   return date.getTime();
 }
 
@@ -116,7 +118,7 @@ function summarizeBuckets(buckets: Bucket[]): BucketSummary[] {
         end: bucket.end.toISOString(),
         upPercent: 0,
         avgLatency: null,
-        color: "grey",
+        color: statusTimelineConfig.fallbackToken,
       };
     }
 
@@ -142,7 +144,10 @@ function summarizeBuckets(buckets: Bucket[]): BucketSummary[] {
   });
 }
 
-function buildBucketSummaries(checks: ServiceCheck[], bucketCount = 48): BucketSummary[] {
+function buildBucketSummaries(
+  checks: ServiceCheck[],
+  bucketCount = frontendConfig.timeline.bucketCount
+): BucketSummary[] {
   const buckets = generateBuckets(bucketCount);
   attachChecksToBuckets(checks, buckets);
   return summarizeBuckets(buckets);
@@ -175,13 +180,17 @@ function downsampleSeries(points: TimeSeriesPoint[], maxPoints = 360): TimeSerie
 
 // --- Color logic ---
 export function determineColor(upPercent: number, avgLatency: number | null): string {
-  if (upPercent >= 80 && avgLatency !== null && avgLatency < 40) return "green";
-  if (upPercent >= 20 && upPercent < 80 && avgLatency !== null && avgLatency < 40) return "darkgreen";
-  if (upPercent >= 80 && avgLatency !== null && avgLatency >= 40) return "orange";
-  if (upPercent >= 80 && avgLatency === null) return "blue";
-  if (upPercent >= 20 && avgLatency === null) return "darkblue";
-  if (upPercent < 20) return "red";
-  return "grey";
+  const stableThreshold = statusTimelineConfig.upStableThresholdPct;
+  const degradedThreshold = statusTimelineConfig.upDegradedThresholdPct;
+  const highLatencyThreshold = statusTimelineConfig.highLatencyThresholdMs;
+
+  if (upPercent >= stableThreshold && avgLatency !== null && avgLatency < highLatencyThreshold) return "green";
+  if (upPercent >= degradedThreshold && upPercent < stableThreshold && avgLatency !== null && avgLatency < highLatencyThreshold) return "darkgreen";
+  if (upPercent >= stableThreshold && avgLatency !== null && avgLatency >= highLatencyThreshold) return "orange";
+  if (upPercent >= stableThreshold && avgLatency === null) return "blue";
+  if (upPercent >= degradedThreshold && avgLatency === null) return "darkblue";
+  if (upPercent < degradedThreshold) return statusTimelineConfig.outageToken;
+  return statusTimelineConfig.fallbackToken;
 }
 
 // --- Fetch 24h raw checks across services ---
@@ -211,7 +220,7 @@ export async function getServiceByDomain(domain: string): Promise<ServiceMeta | 
 
 export async function getServiceHistory(
   service: string,
-  limit = 8000
+  limit = frontendConfig.serviceData.historyLimit
 ): Promise<ServiceCheck[]> {
   const json = await fetchApi<{ data?: ServiceCheck[] }>(
     `/service/${encodeURIComponent(service)}?limit=${limit}`
@@ -221,7 +230,7 @@ export async function getServiceHistory(
 
 export async function getServiceDailyHistory(
   service: string,
-  limit = 120
+  limit = frontendConfig.serviceData.dailyLimit
 ): Promise<DailyServiceSummary[]> {
   const json = await fetchApi<{ data?: DailyServiceSummary[] }>(
     `/service/${encodeURIComponent(service)}/daily?limit=${limit}`
@@ -231,7 +240,7 @@ export async function getServiceDailyHistory(
 
 export async function exportServiceRawHistory(
   service: string,
-  days = 90
+  days = frontendConfig.serviceData.defaultExportDays
 ): Promise<ServiceCheck[]> {
   const json = await fetchApi<{ data?: ServiceCheck[] }>(
     `/service/${encodeURIComponent(service)}/export/raw?days=${days}`
@@ -241,7 +250,7 @@ export async function exportServiceRawHistory(
 
 export async function exportServiceDailyHistory(
   service: string,
-  days = 90
+  days = frontendConfig.serviceData.defaultExportDays
 ): Promise<DailyServiceSummary[]> {
   const json = await fetchApi<{ data?: DailyServiceSummary[] }>(
     `/service/${encodeURIComponent(service)}/export/daily?days=${days}`
@@ -300,20 +309,20 @@ export async function getFullServiceData(): Promise<FullServiceCardData[]> {
 
   return metaList.map((meta) => ({
     meta,
-    buckets: buildBucketSummaries(checksByService[meta.domain] ?? [], 48),
+    buckets: buildBucketSummaries(checksByService[meta.domain] ?? [], frontendConfig.timeline.bucketCount),
   }));
 }
 
 export async function getServiceCardData(service: string): Promise<FullServiceCardData | null> {
   const [meta, checks] = await Promise.all([
     getServiceByDomain(service),
-    getServiceHistory(service, 8000),
+    getServiceHistory(service, frontendConfig.serviceData.historyLimit),
   ]);
 
   if (!meta) return null;
 
   return {
     meta,
-    buckets: buildBucketSummaries(checks, 48),
+    buckets: buildBucketSummaries(checks, frontendConfig.timeline.bucketCount),
   };
 }

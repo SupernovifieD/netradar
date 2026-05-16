@@ -5,6 +5,7 @@ from __future__ import annotations
 from textual.app import App
 
 from app.tui.screens import ServiceDashboardScreen
+from config import Config
 
 
 class NetRadarTUI(App[None]):
@@ -104,7 +105,7 @@ class NetRadarTUI(App[None]):
     """
 
     def on_mount(self) -> None:
-        self.push_screen(ServiceDashboardScreen(refresh_seconds=15 * 60))
+        self.push_screen(ServiceDashboardScreen(refresh_seconds=Config.TUI_DASHBOARD_REFRESH_SECONDS))
 
 
 def run_tui() -> None:

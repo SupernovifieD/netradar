@@ -1,0 +1,161 @@
+{
+  "shared": {
+    "status_timeline": {
+      "up_stable_threshold_pct": 80,
+      "up_degraded_threshold_pct": 20,
+      "high_latency_threshold_ms": 40,
+      "fallback_token": "grey",
+      "outage_token": "red",
+      "tokens": {
+        "green": {
+          "hex": "#2ecc71",
+          "label": "Stable"
+        },
+        "darkgreen": {
+          "hex": "#1e8c4e",
+          "label": "Minor instability"
+        },
+        "orange": {
+          "hex": "#e67e22",
+          "label": "High latency"
+        },
+        "blue": {
+          "hex": "#3498db",
+          "label": "No ping data"
+        },
+        "darkblue": {
+          "hex": "#1f5f8b",
+          "label": "Partial response"
+        },
+        "red": {
+          "hex": "#e74c3c",
+          "label": "Outage"
+        },
+        "grey": {
+          "hex": "#555",
+          "label": "No data"
+        }
+      }
+    }
+  },
+  "backend": {
+    "runtime": {
+      "daily_backfill_days": 90,
+      "check_interval_seconds": 60,
+      "default_service_interval_seconds": 60,
+      "default_service_jitter_seconds": 6,
+      "default_max_backoff_seconds": 600,
+      "max_workers": 20
+    },
+    "sqlite": {
+      "timeout_seconds": 30.0,
+      "busy_timeout_ms": 30000
+    },
+    "checker": {
+      "dns_timeout_seconds": 2,
+      "http_timeout_seconds": 2,
+      "ping_count": 4,
+      "ping_timeout_seconds": 1,
+      "http_headers": {
+        "User-Agent": "NetRadar/1.0 (+https://github.com/netradar)",
+        "Accept": "*/*"
+      }
+    },
+    "daily_aggregation": {
+      "algo_version": 1,
+      "status_up_threshold_pct": 95.0,
+      "status_degraded_threshold_pct": 20.0
+    },
+    "export": {
+      "max_days": 90
+    },
+    "api_defaults": {
+      "history_limit": 100,
+      "service_history_limit": 50,
+      "service_daily_limit": 30,
+      "daily_services_limit": 100,
+      "daily_services_offset": 0,
+      "export_days": 90
+    },
+    "cli": {
+      "default_api_base_url": "http://localhost:5001/api",
+      "default_timeout_seconds": 10.0,
+      "ops_snapshot_history_limit": 100,
+      "ops_snapshot_daily_limit": 30,
+      "ops_gate_days": 30,
+      "ops_gate_min_uptime": 99.0,
+      "ops_gate_max_p95_latency": 120.0
+    },
+    "tui": {
+      "dashboard_refresh_seconds": 900,
+      "detail_refresh_seconds": 60,
+      "detail_history_limit": 10000,
+      "detail_bucket_count": 12,
+      "detail_bucket_marker_step": 2,
+      "detail_window_hours": 6,
+      "line_colors": {
+        "latency": "#4ea3ff",
+        "jitter": "#ffd166"
+      },
+      "metric_thresholds_ms": {
+        "latency": {
+          "good_lt": 40,
+          "warning_lt": 100
+        },
+        "jitter": {
+          "good_lt": 5,
+          "warning_lt": 20
+        }
+      },
+      "backoff_warning_seconds": 180
+    }
+  },
+  "frontend": {
+    "api": {
+      "default_browser_base": "/api",
+      "default_server_base": "http://localhost:5001/api",
+      "default_internal_base": "http://localhost:5001/api"
+    },
+    "timeline": {
+      "bucket_count": 48,
+      "mobile_bucket_count": 24,
+      "bucket_window_minutes": 30,
+      "outage_consecutive_red_buckets": 4,
+      "marker_every_buckets": 4
+    },
+    "service_data": {
+      "history_limit": 8000,
+      "daily_limit": 120,
+      "default_export_days": 90
+    },
+    "refresh": {
+      "service_list_ms": 60000,
+      "service_detail_ms": 120000,
+      "clock_ms": 1000
+    },
+    "charts": {
+      "strokes": {
+        "latency": "#4ea3ff",
+        "jitter": "#ffd166"
+      }
+    },
+    "support_highlight": {
+      "min_delay_ms": 15000,
+      "max_delay_ms": 45000,
+      "pulse_duration_ms": 2000
+    },
+    "calendar_colors": {
+      "up_cell_bg": "#1e8c4e",
+      "up_cell_fg": "#ebfff3",
+      "degraded_cell_bg": "#a0611f",
+      "degraded_cell_fg": "#fff5ea",
+      "down_cell_bg": "#8f2d27",
+      "down_cell_fg": "#ffecec",
+      "nodata_cell_bg": "#d9d9d9",
+      "nodata_cell_fg": "#3f3f3f",
+      "future_cell_bg": "#252525",
+      "future_cell_fg": "#9f9f9f",
+      "today_ring": "#f2f2f2"
+    }
+  }
+}

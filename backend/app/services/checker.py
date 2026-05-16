@@ -14,19 +14,17 @@ import requests
 from requests.exceptions import RequestException
 from urllib3.exceptions import InsecureRequestWarning
 import urllib3
+from config import Config
 
 # NetRadar intentionally probes some HTTPS targets with certificate verification
 # disabled for reachability checks, which emits noisy urllib3 warnings.
 urllib3.disable_warnings(InsecureRequestWarning)
 
-DNS_TIMEOUT_SECONDS: Final[int] = 2
-HTTP_TIMEOUT_SECONDS: Final[int] = 2
-PING_COUNT: Final[int] = 4
-PING_TIMEOUT_SECONDS: Final[int] = 1
-HTTP_HEADERS: Final[dict[str, str]] = {
-    "User-Agent": "NetRadar/1.0 (+https://github.com/netradar)",
-    "Accept": "*/*",
-}
+DNS_TIMEOUT_SECONDS: Final[int] = Config.DNS_TIMEOUT_SECONDS
+HTTP_TIMEOUT_SECONDS: Final[int] = Config.HTTP_TIMEOUT_SECONDS
+PING_COUNT: Final[int] = Config.PING_COUNT
+PING_TIMEOUT_SECONDS: Final[int] = Config.PING_TIMEOUT_SECONDS
+HTTP_HEADERS: Final[dict[str, str]] = dict(Config.HTTP_HEADERS)
 
 ServiceCheckResult = tuple[str, str, str, str, str, str, str, int | None]
 

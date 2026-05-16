@@ -39,6 +39,7 @@ from app.tui.stats import (
     fetch_latest_stats,
     fetch_recent_checks,
 )
+from config import Config
 
 
 def _row_key_to_domain(row_key: object) -> str:
@@ -139,7 +140,7 @@ class DeleteServiceModal(ModalScreen[bool]):
 class ServiceDetailScreen(Screen):
     """Detail screen for one service with buckets and 6h graphs."""
 
-    AUTO_REFRESH_SECONDS = 60
+    AUTO_REFRESH_SECONDS = Config.TUI_DETAIL_REFRESH_SECONDS
 
     BINDINGS = [
         Binding("b", "back", "Back"),
@@ -194,7 +195,7 @@ class ServiceDetailScreen(Screen):
 
     def _refresh(self) -> None:
         self._last_refresh_monotonic = monotonic()
-        rows = fetch_recent_checks(self._service.domain, limit=10_000)
+        rows = fetch_recent_checks(self._service.domain, limit=Config.TUI_DETAIL_HISTORY_LIMIT)
         runtime_rows = monitor.get_runtime_snapshot().get("services", [])
         runtime_by_domain = {
             row.get("domain"): row
@@ -250,10 +251,14 @@ class ServiceDetailScreen(Screen):
 
         meta_widget.update(meta_text)
 
-        buckets = build_half_hour_buckets(rows, bucket_count=12)
+        buckets = build_half_hour_buckets(rows, bucket_count=Config.TUI_DETAIL_BUCKET_COUNT)
         bucket_width = self._content_width(buckets_widget)
         bucket_text = Text()
-        bucket_text.append("6h window (30-minute slots, newest on the right)\n", style="bold")
+        bucket_window_hours = Config.TUI_DETAIL_WINDOW_HOURS
+        bucket_text.append(
+            f"{bucket_window_hours}h window ({Config.TIMELINE_BUCKET_WINDOW_MINUTES}-minute slots, newest on the right)\n",
+            style="bold",
+        )
         bucket_text.append_text(
             build_bucket_bar(
                 buckets,
@@ -267,20 +272,20 @@ class ServiceDetailScreen(Screen):
                 buckets,
                 width=bucket_width,
                 newest_on_right=True,
-                marker_every_buckets=2,
+                marker_every_buckets=Config.TUI_DETAIL_BUCKET_MARKER_STEP,
             )
         )
         buckets_widget.update(bucket_text)
 
-        latency_points, jitter_points = build_latency_and_jitter(rows, window_hours=6)
+        latency_points, jitter_points = build_latency_and_jitter(rows, window_hours=bucket_window_hours)
         latency_graph_width = self._content_width(latency_widget)
         jitter_graph_width = self._content_width(jitter_widget)
 
-        latency_text = Text("Latency Graph (last 6 hours)\n", style="bold")
+        latency_text = Text(f"Latency Graph (last {bucket_window_hours} hours)\n", style="bold")
         if latency_points:
             latency_text.append(
                 build_sparkline(latency_points, width=latency_graph_width),
-                style="#4ea3ff",
+                style=Config.TUI_LINE_COLOR_LATENCY,
             )
             stats = compute_series_stats(latency_points)
             if stats is not None:
@@ -292,15 +297,15 @@ class ServiceDetailScreen(Screen):
                 latency_text.append_text(style_metric_value(stats.maximum, kind="latency"))
                 latency_text.append(" ms")
         else:
-            latency_text.append("No latency data in the last 6 hours.", style="#9f9f9f")
+            latency_text.append(f"No latency data in the last {bucket_window_hours} hours.", style="#9f9f9f")
 
         latency_widget.update(latency_text)
 
-        jitter_text = Text("Jitter Graph (last 6 hours)\n", style="bold")
+        jitter_text = Text(f"Jitter Graph (last {bucket_window_hours} hours)\n", style="bold")
         if jitter_points:
             jitter_text.append(
                 build_sparkline(jitter_points, width=jitter_graph_width),
-                style="#ffd166",
+                style=Config.TUI_LINE_COLOR_JITTER,
             )
             stats = compute_series_stats(jitter_points)
             if stats is not None:
@@ -312,7 +317,10 @@ class ServiceDetailScreen(Screen):
                 jitter_text.append_text(style_metric_value(stats.maximum, kind="jitter"))
                 jitter_text.append(" ms")
         else:
-            jitter_text.append("Not enough samples to compute jitter in the last 6 hours.", style="#9f9f9f")
+            jitter_text.append(
+                f"Not enough samples to compute jitter in the last {bucket_window_hours} hours.",
+                style="#9f9f9f",
+            )
 
         jitter_widget.update(jitter_text)
 
@@ -334,7 +342,7 @@ class ServiceDashboardScreen(Screen):
         Binding("d", "delete_service", "Delete"),
     ]
 
-    def __init__(self, *, refresh_seconds: int = 900) -> None:
+    def __init__(self, *, refresh_seconds: int = Config.TUI_DASHBOARD_REFRESH_SECONDS) -> None:
         super().__init__()
         self._catalog = ServiceCatalog()
         self._search_query = ""

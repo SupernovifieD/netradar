@@ -21,8 +21,12 @@ def print_startup_banner() -> None:
     print("  GET  /api/services                     - Services metadata")
     print("  GET  /api/service/<name>               - History for specific service")
     print("  GET  /api/service/<name>/daily         - Daily history for a specific service")
-    print("  GET  /api/service/<name>/export/raw    - Raw checks export (max 90 days)")
-    print("  GET  /api/service/<name>/export/daily  - Daily summary export (max 90 days)")
+    print(
+        f"  GET  /api/service/<name>/export/raw    - Raw checks export (max {Config.MAX_EXPORT_DAYS} days)"
+    )
+    print(
+        f"  GET  /api/service/<name>/export/daily  - Daily summary export (max {Config.MAX_EXPORT_DAYS} days)"
+    )
     print("  GET  /api/daily/services               - Daily summaries for all services")
     print("  POST /api/monitor/start                - Start monitoring")
     print("  POST /api/monitor/stop                 - Stop monitoring")

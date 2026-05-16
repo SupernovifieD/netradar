@@ -9,18 +9,17 @@ from rich.text import Text
 
 from app.time_utils import format_datetime_for_display
 from app.tui.stats import BucketSummary, SeriesPoint
+from config import Config
 
 SPARK_CHARS = "▁▂▃▄▅▆▇█"
 
 BUCKET_COLOR_HEX = {
-    "green": "#2ecc71",
-    "darkgreen": "#1e8c4e",
-    "orange": "#e67e22",
-    "blue": "#3498db",
-    "darkblue": "#1f5f8b",
-    "red": "#e74c3c",
-    "grey": "#666666",
+    token: str(definition.get("hex", "#666666"))
+    for token, definition in Config.TIMELINE_TOKENS.items()
 }
+BUCKET_FALLBACK_HEX = BUCKET_COLOR_HEX.get(Config.TIMELINE_FALLBACK_TOKEN, "#666666")
+TIMELINE_UP_HEX = BUCKET_COLOR_HEX.get("green", "#2ecc71")
+TIMELINE_DOWN_HEX = BUCKET_COLOR_HEX.get(Config.TIMELINE_OUTAGE_TOKEN, "#e74c3c")
 
 
 @dataclass(slots=True, frozen=True)
@@ -46,40 +45,40 @@ def _text(value: str, style: str | None = None) -> Text:
 def style_status(value: str) -> Text:
     """Return styled status text."""
     if value == "UP":
-        return _text("UP", "bold #2ecc71")
+        return _text("UP", f"bold {TIMELINE_UP_HEX}")
     if value == "DOWN":
-        return _text("DOWN", "bold #e74c3c")
+        return _text("DOWN", f"bold {TIMELINE_DOWN_HEX}")
     return _text("NO DATA", "#9f9f9f")
 
 
 def style_dns(value: str) -> Text:
     """Return styled DNS result text."""
     if value == "OK":
-        return _text("OK", "#2ecc71")
+        return _text("OK", TIMELINE_UP_HEX)
     if value == "FAIL":
-        return _text("FAIL", "#e74c3c")
+        return _text("FAIL", TIMELINE_DOWN_HEX)
     return _text("NO DATA", "#9f9f9f")
 
 
 def style_tcp(value: str) -> Text:
     """Return styled TCP/HTTP result text."""
     if value == "HTTPS":
-        return _text("HTTPS", "#2ecc71")
+        return _text("HTTPS", TIMELINE_UP_HEX)
     if value == "HTTP":
         return _text("HTTP", "#f1c40f")
     if value == "FAIL":
-        return _text("FAIL", "#e74c3c")
+        return _text("FAIL", TIMELINE_DOWN_HEX)
     return _text("NO DATA", "#9f9f9f")
 
 
 def style_probe_reason(value: str) -> Text:
     """Return styled probe-reason text."""
     if value in {"OK"}:
-        return _text(value, "#2ecc71")
+        return _text(value, TIMELINE_UP_HEX)
     if value in {"FORBIDDEN", "RATE_LIMITED"}:
         return _text(value, "#f1c40f")
     if value in {"DNS_FAIL", "TCP_FAIL", "CHECK_EXCEPTION"}:
-        return _text(value, "#e74c3c")
+        return _text(value, TIMELINE_DOWN_HEX)
     if value in {"NO_DATA"}:
         return _text(value, "#9f9f9f")
     return _text(value or "UNKNOWN", "#a6a6a6")
@@ -90,19 +89,19 @@ def style_http_status_code(value: int | None) -> Text:
     if value is None:
         return _text("-", "#9f9f9f")
     if 200 <= value < 300:
-        return _text(str(value), "#2ecc71")
+        return _text(str(value), TIMELINE_UP_HEX)
     if value in {403, 429}:
         return _text(str(value), "#f1c40f")
     if 400 <= value < 600:
-        return _text(str(value), "#e74c3c")
+        return _text(str(value), TIMELINE_DOWN_HEX)
     return _text(str(value), "#a6a6a6")
 
 
 def style_backoff_seconds(value: int) -> Text:
     """Return styled backoff seconds text."""
     if value <= 0:
-        return _text("0s", "#2ecc71")
-    if value <= 180:
+        return _text("0s", TIMELINE_UP_HEX)
+    if value <= Config.TUI_BACKOFF_WARNING_SECONDS:
         return _text(f"{value}s", "#f1c40f")
     return _text(f"{value}s", "#e67e22")
 
@@ -113,12 +112,12 @@ def style_latency(value: str) -> Text:
     if parsed is None:
         return _text("n/a", "#9f9f9f")
 
-    if parsed < 40:
-        style = "#2ecc71"
-    elif parsed < 100:
+    if parsed < Config.TUI_LATENCY_GOOD_LT:
+        style = TIMELINE_UP_HEX
+    elif parsed < Config.TUI_LATENCY_WARNING_LT:
         style = "#f1c40f"
     else:
-        style = "#e74c3c"
+        style = TIMELINE_DOWN_HEX
 
     return _text(f"{parsed:.1f}", style)
 
@@ -130,11 +129,11 @@ def style_packet_loss(value: str) -> Text:
         return _text("n/a", "#9f9f9f")
 
     if parsed <= 0:
-        style = "#2ecc71"
+        style = TIMELINE_UP_HEX
     elif parsed <= 5:
         style = "#f1c40f"
     else:
-        style = "#e74c3c"
+        style = TIMELINE_DOWN_HEX
 
     return _text(f"{parsed:.0f}%", style)
 
@@ -147,7 +146,7 @@ def style_timestamp(value: str) -> Text:
 
 
 def _bucket_token_to_style(color_token: str) -> str:
-    return BUCKET_COLOR_HEX.get(color_token, "#666666")
+    return BUCKET_COLOR_HEX.get(color_token, BUCKET_FALLBACK_HEX)
 
 
 def _ordered_buckets(buckets: list[BucketSummary], *, newest_on_right: bool) -> list[BucketSummary]:
@@ -307,19 +306,19 @@ def compute_series_stats(points: list[SeriesPoint]) -> SeriesStats | None:
 def style_metric_value(value: float, *, kind: str) -> Text:
     """Colorize a numeric metric based on kind-specific thresholds."""
     if kind == "latency":
-        if value < 40:
-            style = "#2ecc71"
-        elif value < 100:
+        if value < Config.TUI_LATENCY_GOOD_LT:
+            style = TIMELINE_UP_HEX
+        elif value < Config.TUI_LATENCY_WARNING_LT:
             style = "#f1c40f"
         else:
-            style = "#e74c3c"
+            style = TIMELINE_DOWN_HEX
     else:  # jitter
-        if value < 5:
-            style = "#2ecc71"
-        elif value < 20:
+        if value < Config.TUI_JITTER_GOOD_LT:
+            style = TIMELINE_UP_HEX
+        elif value < Config.TUI_JITTER_WARNING_LT:
             style = "#f1c40f"
         else:
-            style = "#e74c3c"
+            style = TIMELINE_DOWN_HEX
 
     return _text(f"{value:.2f}", style)
 

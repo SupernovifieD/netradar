@@ -6,7 +6,19 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
-No unreleased changes yet.
+Configuration centralization release for shared frontend/backend settings.
+
+### Added
+
+- Shared runtime settings file: `frontend/netradar.config.json`.
+- Frontend typed config loader: `frontend/lib/config.ts`.
+- Backend shared settings file support via `NETRADAR_SETTINGS_FILE`.
+
+### Changed
+
+- Frontend now reads timeline colors/labels, timeline thresholds, API base defaults, refresh cadences, export-day defaults, chart stroke colors, and calendar colors from shared config instead of hard-coded literals.
+- Backend now reads checker/network timeouts, SQLite timeouts, daily aggregation thresholds, API/CLI default limits, export limits, TUI refresh/bucket/chart settings, and shared timeline thresholds/tokens from shared config (environment variables still override when provided).
+- Docker backend image and `docker-compose.yml` now include/mount `netradar.config.json` so containerized backend and frontend use the same settings source.
 
 ## [0.1.1] - 2026-05-14
 

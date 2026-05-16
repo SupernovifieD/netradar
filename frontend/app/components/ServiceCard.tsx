@@ -1,4 +1,5 @@
 import StatusBar from "./StatusBar";
+import { frontendConfig, statusTimelineConfig, statusTokenToHex } from "@/lib/config";
 
 export default function ServiceCard({
   meta,
@@ -20,10 +21,10 @@ export default function ServiceCard({
   ): boolean {
     if (bucketList.length < limit) return false;
     const latestBuckets = bucketList.slice(-limit);
-    return latestBuckets.every((bucket) => bucket.color === "red");
+    return latestBuckets.every((bucket) => bucket.color === statusTimelineConfig.outageToken);
   }
 
-  const manyReds = hasLatestReds(buckets, 4);
+  const manyReds = hasLatestReds(buckets, frontendConfig.timeline.outageConsecutiveRedBuckets);
 
   return (
     <div
@@ -48,7 +49,11 @@ export default function ServiceCard({
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span>{meta.name}</span>
-              {manyReds && <span style={{ color: "red", fontSize: "14px" }}>Outage</span>}
+              {manyReds && (
+                <span style={{ color: statusTokenToHex(statusTimelineConfig.outageToken), fontSize: "14px" }}>
+                  Outage
+                </span>
+              )}
             </div>
           </div>
 

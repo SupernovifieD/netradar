@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Clock from "./Clock";
 import ColorGuide from "./ColorGuide";
+import { frontendConfig } from "@/lib/config";
 
 export default function Header() {
   const [highlightSupport, setHighlightSupport] = useState(false);
@@ -11,8 +12,8 @@ export default function Header() {
     let timeoutId: NodeJS.Timeout;
 
     const scheduleNext = () => {
-      const min = 15_000;
-      const max = 45_000;
+      const min = frontendConfig.supportHighlight.minDelayMs;
+      const max = frontendConfig.supportHighlight.maxDelayMs;
       const delay = Math.floor(Math.random() * (max - min + 1)) + min;
 
       timeoutId = setTimeout(() => {
@@ -21,7 +22,7 @@ export default function Header() {
         setTimeout(() => {
           setHighlightSupport(false);
           scheduleNext();
-        }, 2000);
+        }, frontendConfig.supportHighlight.pulseDurationMs);
       }, delay);
     };
 

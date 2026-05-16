@@ -18,8 +18,9 @@ from app.models import CheckResult
 from app.services.checker import check_service
 from app.services.monitor import ServiceMonitor
 from app.services_catalog import ServiceCatalog, ServiceCatalogItem
+from config import Config
 
-MAX_EXPORT_DAYS = 90
+MAX_EXPORT_DAYS = Config.MAX_EXPORT_DAYS
 _MONITORING_UNSET = object()
 
 
@@ -276,7 +277,11 @@ class NetRadarOperations:
         """Return latest status rows for all services."""
         return CheckResult.get_services_status()
 
-    def history_recent(self, *, limit: int = 100) -> list[dict[str, Any]]:
+    def history_recent(
+        self,
+        *,
+        limit: int = Config.API_DEFAULT_HISTORY_LIMIT,
+    ) -> list[dict[str, Any]]:
         """Return newest checks across services."""
         validate_positive_int(limit, field_name="limit")
         return CheckResult.get_latest(limit)
@@ -285,7 +290,12 @@ class NetRadarOperations:
         """Return checks from the last 24 hours."""
         return CheckResult.get_last_24h()
 
-    def history_service(self, service: str, *, limit: int = 50) -> list[dict[str, Any]]:
+    def history_service(
+        self,
+        service: str,
+        *,
+        limit: int = Config.API_DEFAULT_SERVICE_HISTORY_LIMIT,
+    ) -> list[dict[str, Any]]:
         """Return newest checks for one service."""
         validate_positive_int(limit, field_name="limit")
         return CheckResult.get_by_service(service, limit)
@@ -294,7 +304,7 @@ class NetRadarOperations:
         self,
         service: str,
         *,
-        limit: int = 30,
+        limit: int = Config.API_DEFAULT_SERVICE_DAILY_LIMIT,
         before_day: str | None = None,
     ) -> list[dict[str, Any]]:
         """Return daily summaries for one service with inline intervals."""
@@ -312,8 +322,8 @@ class NetRadarOperations:
         self,
         *,
         day: str | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = Config.API_DEFAULT_DAILY_SERVICES_LIMIT,
+        offset: int = Config.API_DEFAULT_DAILY_SERVICES_OFFSET,
     ) -> dict[str, Any]:
         """Return all-service daily summaries for one day."""
         validate_positive_int(limit, field_name="limit")
@@ -331,7 +341,12 @@ class NetRadarOperations:
             "data": self._attach_intervals(rows),
         }
 
-    def export_raw(self, service: str, *, days: int = MAX_EXPORT_DAYS) -> dict[str, Any]:
+    def export_raw(
+        self,
+        service: str,
+        *,
+        days: int = Config.API_DEFAULT_EXPORT_DAYS,
+    ) -> dict[str, Any]:
         """Return raw checks export payload for one service."""
         resolved_days = self._resolve_export_days(days)
 
@@ -353,7 +368,12 @@ class NetRadarOperations:
             "data": rows,
         }
 
-    def export_daily(self, service: str, *, days: int = MAX_EXPORT_DAYS) -> dict[str, Any]:
+    def export_daily(
+        self,
+        service: str,
+        *,
+        days: int = Config.API_DEFAULT_EXPORT_DAYS,
+    ) -> dict[str, Any]:
         """Return daily summaries export payload for one service."""
         resolved_days = self._resolve_export_days(days)
 
@@ -440,8 +460,8 @@ class NetRadarOperations:
         self,
         service: str,
         *,
-        history_limit: int = 100,
-        daily_limit: int = 30,
+        history_limit: int = Config.CLI_DEFAULT_OPS_SNAPSHOT_HISTORY_LIMIT,
+        daily_limit: int = Config.CLI_DEFAULT_OPS_SNAPSHOT_DAILY_LIMIT,
     ) -> dict[str, Any]:
         """Return compact agent-oriented operational snapshot."""
         validate_positive_int(history_limit, field_name="history_limit")
@@ -467,9 +487,9 @@ class NetRadarOperations:
         self,
         service: str,
         *,
-        days: int = 30,
-        min_uptime: float = 99.0,
-        max_p95_latency: float = 120.0,
+        days: int = Config.CLI_DEFAULT_OPS_GATE_DAYS,
+        min_uptime: float = Config.CLI_DEFAULT_OPS_GATE_MIN_UPTIME,
+        max_p95_latency: float = Config.CLI_DEFAULT_OPS_GATE_MAX_P95_LATENCY,
     ) -> dict[str, Any]:
         """Evaluate deterministic gate criteria using daily summaries."""
         export = self.export_daily(service, days=days)

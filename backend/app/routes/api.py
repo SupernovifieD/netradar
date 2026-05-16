@@ -9,6 +9,7 @@ from flask import Blueprint, jsonify, request
 from app.core.errors import CoreError
 from app.core.operations import NetRadarOperations
 from app.services.monitor import monitor
+from config import Config
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 core = NetRadarOperations(monitor=monitor)
@@ -70,7 +71,11 @@ def get_status():
 @bp.route("/history", methods=["GET"])
 def get_history():
     """Get recent checks across services, newest first."""
-    payload, error = _run(lambda: core.history_recent(limit=_int_query_arg("limit", default=100)))
+    payload, error = _run(
+        lambda: core.history_recent(
+            limit=_int_query_arg("limit", default=Config.API_DEFAULT_HISTORY_LIMIT)
+        )
+    )
     if error:
         return error
     return success_response(data=payload)
@@ -89,7 +94,10 @@ def get_last_24h():
 def get_service_history(service: str):
     """Get recent history for one service."""
     payload, error = _run(
-        lambda: core.history_service(service, limit=_int_query_arg("limit", default=50))
+        lambda: core.history_service(
+            service,
+            limit=_int_query_arg("limit", default=Config.API_DEFAULT_SERVICE_HISTORY_LIMIT),
+        )
     )
     if error:
         return error
@@ -102,7 +110,7 @@ def get_service_daily_history(service: str):
     payload, error = _run(
         lambda: core.daily_service(
             service,
-            limit=_int_query_arg("limit", default=30),
+            limit=_int_query_arg("limit", default=Config.API_DEFAULT_SERVICE_DAILY_LIMIT),
             before_day=request.args.get("before_day"),
         )
     )
@@ -113,8 +121,10 @@ def get_service_daily_history(service: str):
 
 @bp.route("/service/<service>/export/raw", methods=["GET"])
 def export_service_raw(service: str):
-    """Return service-level raw checks for the last N days (max 90)."""
-    payload, error = _run(lambda: core.export_raw(service, days=_int_query_arg("days", default=90)))
+    """Return service-level raw checks for the last N days (max configured limit)."""
+    payload, error = _run(
+        lambda: core.export_raw(service, days=_int_query_arg("days", default=Config.API_DEFAULT_EXPORT_DAYS))
+    )
     if error:
         return error
     return success_response(**payload)
@@ -122,8 +132,13 @@ def export_service_raw(service: str):
 
 @bp.route("/service/<service>/export/daily", methods=["GET"])
 def export_service_daily(service: str):
-    """Return service-level daily summaries for the last N closed UTC days (max 90)."""
-    payload, error = _run(lambda: core.export_daily(service, days=_int_query_arg("days", default=90)))
+    """Return service-level daily summaries for the last N closed UTC days (max configured limit)."""
+    payload, error = _run(
+        lambda: core.export_daily(
+            service,
+            days=_int_query_arg("days", default=Config.API_DEFAULT_EXPORT_DAYS),
+        )
+    )
     if error:
         return error
     return success_response(**payload)
@@ -135,8 +150,8 @@ def get_daily_services():
     payload, error = _run(
         lambda: core.daily_services(
             day=request.args.get("day"),
-            limit=_int_query_arg("limit", default=100),
-            offset=_int_query_arg("offset", default=0),
+            limit=_int_query_arg("limit", default=Config.API_DEFAULT_DAILY_SERVICES_LIMIT),
+            offset=_int_query_arg("offset", default=Config.API_DEFAULT_DAILY_SERVICES_OFFSET),
         )
     )
     if error:

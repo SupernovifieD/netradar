@@ -14,7 +14,40 @@ export default function ChangelogPage() {
         <h1>Changelog</h1>
 
         <h3>Unreleased</h3>
-        <p>No unreleased changes yet.</p>
+        <p>Configuration centralization release for shared frontend/backend settings.</p>
+
+        <h4>Added</h4>
+        <ul>
+          <li>
+            Shared runtime settings file: <code>frontend/netradar.config.json</code>.
+          </li>
+          <li>
+            Frontend typed config loader: <code>frontend/lib/config.ts</code>.
+          </li>
+          <li>
+            Backend shared settings file support via <code>NETRADAR_SETTINGS_FILE</code>.
+          </li>
+        </ul>
+
+        <h4>Changed</h4>
+        <ul>
+          <li>
+            Frontend now reads timeline colors/labels, timeline thresholds, API base defaults,
+            refresh cadences, export-day defaults, chart stroke colors, and calendar colors from
+            shared config instead of hard-coded literals.
+          </li>
+          <li>
+            Backend now reads checker/network timeouts, SQLite timeouts, daily aggregation
+            thresholds, API/CLI default limits, export limits, TUI refresh/bucket/chart settings,
+            and shared timeline thresholds/tokens from shared config (environment variables still
+            override when provided).
+          </li>
+          <li>
+            Docker backend image and <code>docker-compose.yml</code> now include/mount{" "}
+            <code>netradar.config.json</code> so containerized backend and frontend use the same
+            settings source.
+          </li>
+        </ul>
 
         <h3>v0.1.1</h3>
         <p>2026-05-14</p>

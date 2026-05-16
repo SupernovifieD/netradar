@@ -19,6 +19,7 @@ import {
   getServiceDailyHistory,
   getServiceHistory,
 } from "@/lib/api";
+import { frontendConfig } from "@/lib/config";
 import { DailyServiceSummary, ServiceCheck, ServiceMeta } from "@/types/service";
 
 function downloadJson(filename: string, payload: unknown): void {
@@ -93,6 +94,7 @@ export default function ServiceDetailPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isExportingRaw, setIsExportingRaw] = useState(false);
   const [isExportingDaily, setIsExportingDaily] = useState(false);
+  const exportDays = frontendConfig.serviceData.defaultExportDays;
 
   const refreshData = useCallback(async () => {
     if (!serviceDomain) {
@@ -104,8 +106,8 @@ export default function ServiceDetailPage() {
     try {
       const [meta, checks, daily] = await Promise.all([
         getServiceByDomain(serviceDomain),
-        getServiceHistory(serviceDomain, 8000),
-        getServiceDailyHistory(serviceDomain, 120),
+        getServiceHistory(serviceDomain, frontendConfig.serviceData.historyLimit),
+        getServiceDailyHistory(serviceDomain, frontendConfig.serviceData.dailyLimit),
       ]);
 
       if (!meta) {
@@ -144,7 +146,7 @@ export default function ServiceDetailPage() {
 
     const interval = setInterval(() => {
       void refreshData();
-    }, 120_000);
+    }, frontendConfig.refresh.serviceDetailMs);
 
     return () => {
       clearTimeout(initialTimeout);
@@ -152,9 +154,15 @@ export default function ServiceDetailPage() {
     };
   }, [refreshData]);
 
-  const cardBuckets = useMemo(() => buildServiceBucketsFromChecks(rawChecks, 48), [rawChecks]);
+  const cardBuckets = useMemo(
+    () => buildServiceBucketsFromChecks(rawChecks, frontendConfig.timeline.bucketCount),
+    [rawChecks]
+  );
 
-  const visibleBuckets = useMemo(() => (isMobile ? cardBuckets.slice(-24) : cardBuckets), [cardBuckets, isMobile]);
+  const visibleBuckets = useMemo(
+    () => (isMobile ? cardBuckets.slice(-frontendConfig.timeline.mobileBucketCount) : cardBuckets),
+    [cardBuckets, isMobile]
+  );
 
   const latestDaily = dailySummaries[0] ?? null;
 
@@ -167,8 +175,8 @@ export default function ServiceDetailPage() {
 
     try {
       setIsExportingRaw(true);
-      const rows = await exportServiceRawHistory(serviceMeta.domain, 90);
-      downloadJson(`netradar-raw-${serviceMeta.domain}-90d.json`, rows);
+      const rows = await exportServiceRawHistory(serviceMeta.domain, exportDays);
+      downloadJson(`netradar-raw-${serviceMeta.domain}-${exportDays}d.json`, rows);
     } finally {
       setIsExportingRaw(false);
     }
@@ -179,8 +187,8 @@ export default function ServiceDetailPage() {
 
     try {
       setIsExportingDaily(true);
-      const rows = await exportServiceDailyHistory(serviceMeta.domain, 90);
-      downloadJson(`netradar-daily-${serviceMeta.domain}-90d.json`, rows);
+      const rows = await exportServiceDailyHistory(serviceMeta.domain, exportDays);
+      downloadJson(`netradar-daily-${serviceMeta.domain}-${exportDays}d.json`, rows);
     } finally {
       setIsExportingDaily(false);
     }
@@ -236,15 +244,15 @@ export default function ServiceDetailPage() {
             <div className="box service-download-box">
               <h3>Download data</h3>
               <p>
-                You can download up to 90 days from both databases. For longer periods, you can
+                You can download up to {exportDays} days from both databases. For longer periods, you can
                 do so by querying the local database.
               </p>
               <div className="service-download-actions">
                 <button className="filter-btn" onClick={() => void handleRawExport()} disabled={isExportingRaw}>
-                  {isExportingRaw ? "Preparing..." : "Download raw data (90 days)"}
+                  {isExportingRaw ? "Preparing..." : `Download raw data (${exportDays} days)`}
                 </button>
                 <button className="filter-btn" onClick={() => void handleDailyExport()} disabled={isExportingDaily}>
-                  {isExportingDaily ? "Preparing..." : "Download daily summary (90 days)"}
+                  {isExportingDaily ? "Preparing..." : `Download daily summary (${exportDays} days)`}
                 </button>
               </div>
             </div>
@@ -257,7 +265,7 @@ export default function ServiceDetailPage() {
                 title="Jitter"
                 points={jitterSeries}
                 unit="ms"
-                stroke="#ffd166"
+                stroke={frontendConfig.charts.strokes.jitter}
                 windowHours={windowHours}
                 emptyLabel="Not enough data in this window to compute jitter."
               />
@@ -267,7 +275,7 @@ export default function ServiceDetailPage() {
                 title="Latency"
                 points={latencySeries}
                 unit="ms"
-                stroke="#4ea3ff"
+                stroke={frontendConfig.charts.strokes.latency}
                 windowHours={windowHours}
                 emptyLabel="No latency data available in this window."
               />

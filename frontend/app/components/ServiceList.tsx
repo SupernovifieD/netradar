@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getFullServiceData } from "@/lib/api";
+import { frontendConfig, statusTimelineConfig } from "@/lib/config";
 import type { FullServiceCardData } from "@/types/service";
 import ServiceCard from "./ServiceCard";
 
@@ -40,7 +41,7 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
   useEffect(() => {
     const interval = setInterval(() => {
       void refresh();
-    }, 60_000);
+    }, frontendConfig.refresh.serviceListMs);
     return () => clearInterval(interval);
   }, []);
 
@@ -51,7 +52,7 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
 
   function latestColor(service: FullServiceCardData): string {
     const last = service.buckets[service.buckets.length - 1];
-    return last?.color ?? "grey";
+    return last?.color ?? statusTimelineConfig.fallbackToken;
   }
 
   let filtered = services.filter((service) => {
@@ -70,8 +71,8 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
   filtered = [...filtered].sort((a, b) => {
     if (sort === "latency-fast") return latestLatency(a) - latestLatency(b);
     if (sort === "latency-slow") return latestLatency(b) - latestLatency(a);
-    if (sort === "status-up") return latestColor(a) === "red" ? 1 : -1;
-    if (sort === "status-down") return latestColor(a) === "red" ? -1 : 1;
+    if (sort === "status-up") return latestColor(a) === statusTimelineConfig.outageToken ? 1 : -1;
+    if (sort === "status-down") return latestColor(a) === statusTimelineConfig.outageToken ? -1 : 1;
     return 0;
   });
 
@@ -175,7 +176,11 @@ export default function ServiceList({ initialServices }: ServiceListProps) {
         >
           <ServiceCard
             meta={serviceData.meta}
-            buckets={isMobile ? serviceData.buckets.slice(-24) : serviceData.buckets}
+            buckets={
+              isMobile
+                ? serviceData.buckets.slice(-frontendConfig.timeline.mobileBucketCount)
+                : serviceData.buckets
+            }
           />
         </Link>
       ))}

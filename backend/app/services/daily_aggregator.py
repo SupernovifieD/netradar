@@ -13,9 +13,9 @@ from app.services.monitoring_policy import ServiceMonitoringPolicy, load_service
 from app.time_utils import parse_utc_storage_datetime
 from config import Config
 
-AGGREGATION_ALGO_VERSION = 1
-STATUS_UP_THRESHOLD = 95.0
-STATUS_DEGRADED_THRESHOLD = 20.0
+AGGREGATION_ALGO_VERSION = Config.AGGREGATION_ALGO_VERSION
+STATUS_UP_THRESHOLD = Config.DAILY_STATUS_UP_THRESHOLD
+STATUS_DEGRADED_THRESHOLD = Config.DAILY_STATUS_DEGRADED_THRESHOLD
 
 
 class DailyAggregator:

@@ -1,11 +1,16 @@
+import { statusTimelineConfig } from "@/lib/config";
+
 export default function ColorGuide({ className = "" }: { className?: string }) {
   return (
     <div className={className}>
       Color guide:
-      <div>🟢 Service is available</div>
-      <div>🔵 Service is available, but ping data is missing</div>
-      <div>🟡 Service is unstable</div>
-      <div>🔴 Service outage</div>
+      <div>🟢 {statusTimelineConfig.tokens.green.label}</div>
+      <div>🟢 {statusTimelineConfig.tokens.darkgreen.label}</div>
+      <div>🟡 {statusTimelineConfig.tokens.orange.label}</div>
+      <div>🔵 {statusTimelineConfig.tokens.blue.label}</div>
+      <div>🔵 {statusTimelineConfig.tokens.darkblue.label}</div>
+      <div>🔴 {statusTimelineConfig.tokens.red.label}</div>
+      <div>⚪ {statusTimelineConfig.tokens.grey.label}</div>
     </div>
   );
 }

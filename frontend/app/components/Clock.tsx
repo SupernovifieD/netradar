@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { frontendConfig } from "@/lib/config";
 
 export default function Clock() {
   const [time, setTime] = useState(new Date());
@@ -8,7 +9,7 @@ export default function Clock() {
   useEffect(() => {
     const interval = setInterval(() => {
       setTime(new Date());
-    }, 1000);
+    }, frontendConfig.refresh.clockMs);
 
     return () => clearInterval(interval);
   }, []);
